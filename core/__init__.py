@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session  # <-- Make sure session is imported!
+from flask import Flask, redirect, url_for, session
 from .extensions import db
 
 def create_app():
@@ -11,6 +11,7 @@ def create_app():
 
     db.init_app(app)
 
+    # Import and register Blueprints
     from .auth.routes import auth_bp
     from .inventory.routes import inventory_bp
     from .billing.routes import billing_bp
@@ -24,17 +25,18 @@ def create_app():
     # --- THE SECURE TRAFFIC COP ---
     @app.route('/')
     def home():
-        # Check if a regular company is logged in
+        # 1. Check if a regular company is logged in
         if 'company_id' in session:
             return redirect(url_for('billing.index'))
         
-        # Check if the developer is logged in
+        # 2. Check if the developer is logged in
         elif 'is_developer' in session:
             return redirect(url_for('admin.dashboard'))
             
-        # If nobody is logged in, force them to the Company login page!
+        # 3. If nobody is logged in, force them to the Company login page!
         return redirect(url_for('auth.login'))
 
+    # Create tables if they don't exist
     with app.app_context():
         db.create_all()
 

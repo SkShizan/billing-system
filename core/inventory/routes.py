@@ -12,6 +12,7 @@ def is_logged_in():
 
 @inventory_bp.route('/add-product', methods=['GET', 'POST'])
 def add_product():
+    # SECURITY: Kick them out if they aren't logged in
     if not is_logged_in(): 
         flash("Please log in to access your inventory.", "warning")
         return redirect(url_for('auth.login'))
@@ -34,7 +35,7 @@ def add_product():
             image_file.save(file_path)
             image_path = f'uploads/{filename}'
 
-        # ISOLATION: Assign this product to the specific company
+        # FIX: Assign this product to the specific logged-in company!
         new_product = Product(
             company_id=company_id, 
             name=name, 
@@ -48,7 +49,7 @@ def add_product():
         flash("Product added successfully!", "success")
         return redirect(url_for('inventory.add_product'))
 
-    # ISOLATION: Only load products belonging to this company!
+    # ISOLATION: Only load products belonging to THIS company
     products = Product.query.filter_by(company_id=company_id).order_by(Product.id.desc()).all()
     return render_template('inventory/add_product.html', products=products)
 
@@ -93,7 +94,6 @@ def hsn_suggest():
     query = request.args.get('q', '').strip().lower()
     if len(query) < 2: return jsonify([])
 
-    # HSN is universal, no company_id check needed here
     matches = HSNDictionary.query.filter(HSNDictionary.description.ilike(f'%{query}%')).limit(15).all()
     results = [{"keyword": m.description, "hsn": m.hsn_code, "gst": m.gst_rate} for m in matches]
     return jsonify(results)

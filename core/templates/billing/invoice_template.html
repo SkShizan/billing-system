@@ -3,133 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <title>Invoice - {{ invoice.invoice_number }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
             font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
             color: #333;
-            background-color: #fff;
+            background-color: #f8f9fa;
             margin: 0;
             padding: 30px;
             font-size: 14px;
         }
+        
+        .action-buttons { max-width: 800px; margin: 0 auto 20px auto; text-align: right; }
+        .btn {
+            padding: 10px 20px; margin-left: 10px; border: none; border-radius: 5px;
+            cursor: pointer; font-weight: bold; color: white; font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; text-decoration: none;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-print { background-color: #34495e; }
+        .btn-download { background-color: #e74c3c; }
+        .btn-whatsapp { background-color: #25D366; }
+        .btn-secondary { background-color: #95a5a6; }
+
         .invoice-box {
-            max-width: 800px;
-            margin: auto;
-            padding: 30px;
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            background-color: #fff; max-width: 800px; margin: auto; padding: 40px;
+            border-radius: 8px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
-        .header {
-            width: 100%;
-            display: table;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-        }
-        .header-left {
-            display: table-cell;
-            text-align: left;
-            vertical-align: top;
-        }
-        .header-right {
-            display: table-cell;
-            text-align: right;
-            vertical-align: top;
-        }
-        .company-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        .invoice-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #e74c3c;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-        .billing-info {
-            width: 100%;
-            display: table;
-            margin-bottom: 30px;
-        }
-        .billed-to {
-            display: table-cell;
-            text-align: left;
-            width: 50%;
-        }
-        table.items {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        table.items th, table.items td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-        }
-        table.items th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        table.items td.right, table.items th.right {
-            text-align: right;
-        }
-        .totals-box {
-            width: 100%;
-            display: table;
-        }
-        .totals-space {
-            display: table-cell;
-            width: 60%;
-        }
-        .totals-calc {
-            display: table-cell;
-            width: 40%;
-        }
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .totals-table td {
-            padding: 8px;
-            text-align: right;
-        }
-        .totals-table td.label {
-            font-weight: bold;
-            text-align: left;
-        }
-        .grand-total {
-            font-size: 18px;
-            font-weight: bold;
-            color: #27ae60;
-            border-top: 2px solid #eee;
-            padding-top: 10px !important;
-        }
-        .discount-text {
-            color: #e74c3c;
-        }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            color: #7f8c8d;
-            font-size: 12px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
+        .header { width: 100%; display: table; padding-bottom: 20px; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .header-left { display: table-cell; text-align: left; vertical-align: top; }
+        .header-right { display: table-cell; text-align: right; vertical-align: top; }
+        .company-name { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .invoice-title { font-size: 28px; font-weight: bold; color: #e74c3c; margin-bottom: 5px; text-transform: uppercase; }
+        .billing-info { width: 100%; display: table; margin-bottom: 30px; }
+        .billed-to { display: table-cell; text-align: left; width: 50%; }
+        table.items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        table.items th, table.items td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        table.items th { background-color: #f8f9fa; font-weight: bold; color: #2c3e50; }
+        table.items td.right, table.items th.right { text-align: right; }
+        .totals-box { width: 100%; display: table; }
+        .totals-space { display: table-cell; width: 60%; }
+        .totals-calc { display: table-cell; width: 40%; }
+        .totals-table { width: 100%; border-collapse: collapse; }
+        .totals-table td { padding: 8px; text-align: right; }
+        .totals-table td.label { font-weight: bold; text-align: left; }
+        .grand-total { font-size: 18px; font-weight: bold; color: #27ae60; border-top: 2px solid #eee; padding-top: 10px !important; }
+        .discount-text { color: #e74c3c; }
+        .footer { margin-top: 50px; text-align: center; color: #7f8c8d; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; padding: 0; }
+            .invoice-box { box-shadow: none; padding: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="invoice-box">
+<div class="action-buttons no-print">
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+    <button class="btn btn-download" onclick="downloadPDF()">📄 Download PDF</button>
+    
+    {% if not is_public %}
+        <button class="btn btn-whatsapp" onclick="sendWhatsApp()">💬 Send to WhatsApp</button>
+        <a href="/billing" class="btn btn-secondary">🔙 Back to POS</a>
+    {% endif %}
+</div>
+
+<div class="invoice-box" id="invoice-content">
     <div class="header">
         <div class="header-left">
             {% if invoice.company.logo_path %}
                 <img src="{{ url_for('static', filename=invoice.company.logo_path) }}" style="max-height: 80px; margin-bottom: 10px;" alt="Company Logo">
             {% endif %}
-            
             <div class="company-name">{{ invoice.company.name }}</div>
             <div style="white-space: pre-wrap; margin-bottom: 5px;">{{ invoice.company.address }}</div>
             <div><strong>GSTIN:</strong> {{ invoice.company.gstin }}</div>
@@ -189,7 +135,6 @@
                     <td class="label">Subtotal (Excl. Tax):</td>
                     <td>₹{{ "%.2f"|format(invoice.subtotal) }}</td>
                 </tr>
-                
                 {% if invoice.discount_value > 0 %}
                 <tr>
                     <td class="label discount-text">Discount:</td>
@@ -198,12 +143,10 @@
                     </td>
                 </tr>
                 {% endif %}
-                
                 <tr>
                     <td class="label">Total Tax (GST):</td>
                     <td>₹{{ "%.2f"|format(invoice.total_tax) }}</td>
                 </tr>
-                
                 <tr>
                     <td class="label grand-total">Grand Total:</td>
                     <td class="grand-total">₹{{ "%.2f"|format(invoice.grand_total) }}</td>
@@ -216,6 +159,50 @@
         Thank you for your business! This is a computer-generated invoice and does not require a physical signature.
     </div>
 </div>
+
+<script>
+    // 1. Logic for Downloading the PDF directly in the browser (Zero Server Storage)
+    function downloadPDF() {
+        const element = document.getElementById('invoice-content');
+        
+        const opt = {
+            margin:       0.2,
+            filename:     '{{ invoice.invoice_number }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 }, // High resolution for clear text
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // 2. Logic for Sending the Public Link via WhatsApp
+    {% if not is_public %}
+    function sendWhatsApp() {
+        let phone = "{{ invoice.customer.phone_number }}";
+        phone = phone.replace(/\D/g, ''); 
+        
+        if (phone.length === 10) {
+            phone = "91" + phone; 
+        }
+
+        const name = "{{ invoice.customer.name }}";
+        const invNo = "{{ invoice.invoice_number }}";
+        const amount = '{{ "%.2f"|format(invoice.grand_total) }}';
+        const companyName = "{{ invoice.company.name }}";
+
+        // Generate the exact public link
+        const invoiceLink = `${window.location.origin}/billing/public/invoice/${invNo}`;
+
+        // Construct the message with the clickable link
+        const message = `Hello ${name},%0A%0AThis is an automated message from *${companyName}*.%0AYour invoice *${invNo}* for the total amount of *₹${amount}* has been generated.%0A%0A📄 *Click the secure link below to view and download your PDF Invoice:*%0A${invoiceLink}%0A%0AThank you for your business!`;
+
+        // Redirect to WhatsApp API
+        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${message}`;
+        window.open(url, '_blank');
+    }
+    {% endif %}
+</script>
 
 </body>
 </html>
