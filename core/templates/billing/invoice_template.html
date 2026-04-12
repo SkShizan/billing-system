@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - {{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+            color: #333;
+            background-color: #fff;
+            margin: 0;
+            padding: 30px;
+            font-size: 14px;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        }
+        .header {
+            width: 100%;
+            display: table;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .header-left {
+            display: table-cell;
+            text-align: left;
+            vertical-align: top;
+        }
+        .header-right {
+            display: table-cell;
+            text-align: right;
+            vertical-align: top;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .billing-info {
+            width: 100%;
+            display: table;
+            margin-bottom: 30px;
+        }
+        .billed-to {
+            display: table-cell;
+            text-align: left;
+            width: 50%;
+        }
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        table.items th, table.items td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        table.items th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        table.items td.right, table.items th.right {
+            text-align: right;
+        }
+        .totals-box {
+            width: 100%;
+            display: table;
+        }
+        .totals-space {
+            display: table-cell;
+            width: 60%;
+        }
+        .totals-calc {
+            display: table-cell;
+            width: 40%;
+        }
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals-table td {
+            padding: 8px;
+            text-align: right;
+        }
+        .totals-table td.label {
+            font-weight: bold;
+            text-align: left;
+        }
+        .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+            border-top: 2px solid #eee;
+            padding-top: 10px !important;
+        }
+        .discount-text {
+            color: #e74c3c;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-box">
+    <div class="header">
+        <div class="header-left">
+            {% if invoice.company.logo_path %}
+                <img src="{{ url_for('static', filename=invoice.company.logo_path) }}" style="max-height: 80px; margin-bottom: 10px;" alt="Company Logo">
+            {% endif %}
+            
+            <div class="company-name">{{ invoice.company.name }}</div>
+            <div style="white-space: pre-wrap; margin-bottom: 5px;">{{ invoice.company.address }}</div>
+            <div><strong>GSTIN:</strong> {{ invoice.company.gstin }}</div>
+            <div><strong>Email:</strong> {{ invoice.company.email }}</div>
+        </div>
+        <div class="header-right">
+            <div class="invoice-title">Tax Invoice</div>
+            <div><strong>Invoice No:</strong> {{ invoice.invoice_number }}</div>
+            <div><strong>Date:</strong> {{ invoice.created_at.strftime('%d %b %Y') }}</div>
+        </div>
+    </div>
+
+    <div class="billing-info">
+        <div class="billed-to">
+            <strong>Billed To:</strong><br>
+            <span style="font-size: 16px; font-weight: bold; color: #2c3e50;">{{ invoice.customer.name }}</span><br>
+            Phone: +91 {{ invoice.customer.phone_number }}<br>
+        </div>
+    </div>
+
+    <table class="items">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>HSN/SAC</th>
+                <th class="right">Qty</th>
+                <th class="right">Rate (₹)</th>
+                <th class="right">GST %</th>
+                <th class="right">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.hsn_code or 'N/A' }}</td>
+                <td class="right">{{ item.quantity }}</td>
+                <td class="right">{{ "%.2f"|format(item.price_at_purchase) }}</td>
+                <td class="right">{{ item.gst_percentage_at_purchase }}%</td>
+                <td class="right">
+                    {{ "%.2f"|format(item.price_at_purchase * item.quantity) }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals-box">
+        <div class="totals-space">
+            <p><strong>Terms & Conditions:</strong><br>
+            1. All disputes are subject to local jurisdiction.<br>
+            2. Goods once sold will not be taken back.</p>
+        </div>
+        <div class="totals-calc">
+            <table class="totals-table">
+                <tr>
+                    <td class="label">Subtotal (Excl. Tax):</td>
+                    <td>₹{{ "%.2f"|format(invoice.subtotal) }}</td>
+                </tr>
+                
+                {% if invoice.discount_value > 0 %}
+                <tr>
+                    <td class="label discount-text">Discount:</td>
+                    <td class="discount-text">
+                        - {% if invoice.discount_type == 'flat' %}₹{{ "%.2f"|format(invoice.discount_value) }}{% else %}{{ invoice.discount_value }}%{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                
+                <tr>
+                    <td class="label">Total Tax (GST):</td>
+                    <td>₹{{ "%.2f"|format(invoice.total_tax) }}</td>
+                </tr>
+                
+                <tr>
+                    <td class="label grand-total">Grand Total:</td>
+                    <td class="grand-total">₹{{ "%.2f"|format(invoice.grand_total) }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        Thank you for your business! This is a computer-generated invoice and does not require a physical signature.
+    </div>
+</div>
+
+</body>
+</html>

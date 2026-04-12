@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+    <h2>Client Company Management</h2>
+    <div>
+        <a href="/developer/dashboard" class="btn btn-outline-secondary btn-sm me-2">Back to HSN DB</a>
+        <a href="/developer/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Register New Company</h5>
+            </div>
+            <div class="card-body">
+                <form action="/developer/companies/add" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="fw-bold">Company/Business Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold">Complete Address</label>
+                        <textarea name="address" class="form-control" rows="2" placeholder="123 Tech Park, Sector 5..."
+                            required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">GSTIN</label>
+                            <input type="text" name="gstin" class="form-control" placeholder="19ABCDE1234F1Z5" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="contact@company.com"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row border-top pt-3 mt-2">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Login ID</label>
+                            <input type="text" name="login_id" class="form-control" placeholder="Unique username"
+                                required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="fw-bold">Company Logo (For Invoice)</label>
+                        <input type="file" name="logo" class="form-control" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Create Tenant Workspace</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Active Tenants</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Logo</th>
+                            <th>Company Name</th>
+                            <th>Login ID</th>
+                            <th>Registered On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in companies %}
+                        <tr>
+                            <td>
+                                {% if c.logo_path %}
+                                <img src="{{ url_for('static', filename=c.logo_path) }}" height="40"
+                                    class="rounded border">
+                                {% else %}
+                                <span class="badge bg-secondary">No Logo</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ c.name }}</strong></td>
+                            <td><code>{{ c.login_id }}</code></td>
+                            <td>{{ c.created_at.strftime('%Y-%m-%d') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">No companies registered yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 text-primary">Add New Product</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/inventory/add-product" enctype="multipart/form-data">
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-bold text-muted">Product Name</label>
+                        <input type="text" name="name" id="productName" class="form-control" placeholder="e.g., Laptop, Service..." autocomplete="off" required onkeyup="searchHSN()">
+                        <ul class="list-group position-absolute w-100 shadow" id="hsnSuggestions" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;"></ul>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-muted">HSN/SAC</label>
+                            <input type="text" name="hsn_code" id="hsnCode" class="form-control bg-light" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-muted">GST (%)</label>
+                            <input type="number" step="0.01" name="gst_percentage" id="gstPercentage" class="form-control bg-light" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Base Price (₹)</label>
+                        <input type="number" name="price" class="form-control" placeholder="Price before tax" step="0.01" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted">Image (Optional)</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Save Product</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Current Inventory</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Image</th>
+                                <th>Product Details</th>
+                                <th>Price</th>
+                                <th>GST</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                            <tr>
+                                <td>
+                                    {% if p.image_path %}
+                                        <img src="{{ url_for('static', filename=p.image_path) }}" alt="img" class="rounded border" style="width: 45px; height: 45px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted border" style="width: 45px; height: 45px; font-size: 10px;">No Img</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="text-dark">{{ p.name }}</strong><br>
+                                    <small class="text-muted">HSN: {{ p.hsn_code }}</small>
+                                </td>
+                                <td>₹{{ "%.2f"|format(p.current_price) }}</td>
+                                <td><span class="badge bg-secondary">{{ p.gst_percentage }}%</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal{{ p.id }}">Edit</button>
+                                    <form action="/inventory/delete/{{ p.id }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete {{ p.name }}?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Del</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="editProductModal{{ p.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form action="/inventory/edit/{{ p.id }}" method="POST" enctype="multipart/form-data">
+                                            <div class="modal-header bg-light">
+                                                <h5 class="modal-title">Edit Product: {{ p.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Product Name</label>
+                                                    <input type="text" name="name" class="form-control" value="{{ p.name }}" required>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">HSN Code</label>
+                                                        <input type="text" name="hsn_code" class="form-control" value="{{ p.hsn_code }}" required>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">GST Rate (%)</label>
+                                                        <input type="number" step="0.01" name="gst_percentage" class="form-control" value="{{ p.gst_percentage }}" required>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Base Price (₹)</label>
+                                                    <input type="number" step="0.01" name="price" class="form-control" value="{{ p.current_price }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Update Image (Optional)</label>
+                                                    <input type="file" name="image" class="form-control" accept="image/*">
+                                                    <small class="text-muted">Leave blank to keep the current image.</small>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No products in inventory yet. Add one!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let debounceTimer;
+
+    function searchHSN() {
+        clearTimeout(debounceTimer);
+        const query = document.getElementById('productName').value.trim();
+        const suggestionBox = document.getElementById('hsnSuggestions');
+
+        if (query.length < 2) {
+            suggestionBox.style.display = 'none';
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(`/inventory/api/hsn-suggest?q=${query}`);
+                const data = await response.json();
+
+                suggestionBox.innerHTML = ''; 
+
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                        li.style.cursor = 'pointer';
+                        
+                        li.innerHTML = `
+                            <div style="font-size: 0.9rem; max-width: 80%;">
+                                <span class="fw-bold">${item.hsn}</span> - <span class="text-muted">${item.keyword}</span>
+                            </div>
+                            <span class="badge bg-info rounded-pill">${item.gst}% GST</span>
+                        `;
+                        
+                        li.onclick = () => {
+                            document.getElementById('hsnCode').value = item.hsn;
+                            document.getElementById('gstPercentage').value = item.gst;
+                            suggestionBox.style.display = 'none';
+                        };
+                        suggestionBox.appendChild(li);
+                    });
+                    suggestionBox.style.display = 'block';
+                } else {
+                    suggestionBox.innerHTML = '<li class="list-group-item text-muted text-center small">No matching HSN codes found. Ask developer to add this category.</li>';
+                    suggestionBox.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Error fetching HSN codes", error);
+            }
+        }, 300);
+    }
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.position-relative')) {
+            document.getElementById('hsnSuggestions').style.display = 'none';
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

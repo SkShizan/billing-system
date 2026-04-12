@@ -1,0 +1,76 @@
+from .extensions import db
+from datetime import datetime
+
+# --- NEW: THE TENANT (COMPANY) MODEL ---
+class Company(db.Model):
+    __tablename__ = 'companies'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    login_id = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    logo_path = db.Column(db.String(255), nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    gstin = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships to access a company's specific data easily
+    products = db.relationship('Product', backref='company', lazy=True)
+    customers = db.relationship('Customer', backref='company', lazy=True)
+    invoices = db.relationship('Invoice', backref='company', lazy=True)
+
+class Customer(db.Model):
+    __tablename__ = 'customers'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # ISOLATION
+    name = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(15), nullable=False) # Removed unique=True so diff companies can have same customer
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    invoices = db.relationship('Invoice', backref='customer', lazy=True)
+
+class Product(db.Model):
+    __tablename__ = 'products'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # ISOLATION
+    name = db.Column(db.String(200), nullable=False)
+    current_price = db.Column(db.Float, nullable=False)
+    hsn_code = db.Column(db.String(20), nullable=True)
+    gst_percentage = db.Column(db.Float, default=0.0)
+    image_path = db.Column(db.String(255), nullable=True) 
+
+class Invoice(db.Model):
+    __tablename__ = 'invoices'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # ISOLATION
+    invoice_number = db.Column(db.String(50), unique=True, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    
+    subtotal = db.Column(db.Float, nullable=False)
+    discount_type = db.Column(db.String(10))
+    discount_value = db.Column(db.Float, default=0.0)
+    total_tax = db.Column(db.Float, nullable=False)
+    grand_total = db.Column(db.Float, nullable=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    items = db.relationship('InvoiceItem', backref='invoice', lazy=True)
+
+class InvoiceItem(db.Model):
+    __tablename__ = 'invoice_items'
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoices.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    
+    quantity = db.Column(db.Integer, nullable=False)
+    price_at_purchase = db.Column(db.Float, nullable=False) 
+    gst_percentage_at_purchase = db.Column(db.Float, nullable=False)
+    
+    product = db.relationship('Product')
+
+# HSN Dictionary stays universal (No company_id) so all companies share the dev's uploaded rules
+class HSNDictionary(db.Model):
+    __tablename__ = 'hsn_dictionary'
+    id = db.Column(db.Integer, primary_key=True)
+    hsn_code = db.Column(db.String(20), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    gst_rate = db.Column(db.Float, nullable=False)
