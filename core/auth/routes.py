@@ -18,7 +18,7 @@ def login():
             session['company_id'] = company.id
             session['company_name'] = company.name
             flash(f"Welcome back, {company.name}!", "success")
-            return redirect(url_for('billing.index'))
+            return redirect(url_for('billing.dashboard'))
         else:
             flash("Invalid Login ID or Password.", "danger")
             

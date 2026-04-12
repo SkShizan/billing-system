@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .dash-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
+    
+    /* Metric Cards */
+    .metric-card {
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid rgba(212, 194, 173, 0.4);
+        background-color: #ffffff;
+        box-shadow: 0 10px 30px rgba(102, 121, 107, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(102, 121, 107, 0.1);
+    }
+    .metric-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    .icon-sage { background-color: rgba(102, 121, 107, 0.1); color: var(--color-sage); }
+    .icon-terracotta { background-color: rgba(215, 161, 132, 0.1); color: var(--color-terracotta); }
+    .icon-taupe { background-color: rgba(186, 142, 122, 0.1); color: var(--color-taupe); }
+    
+    .metric-title { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .metric-value { font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0; line-height: 1.2; }
+    .metric-subtitle { font-size: 0.85rem; color: #718096; font-weight: 500; margin-top: 8px; }
+    .trend-up { color: #38a169; font-weight: 600; }
+
+    /* Quick Actions */
+    .quick-action-btn {
+        background-color: #F8F5F1;
+        border: 1px solid var(--color-sand);
+        color: var(--color-sage);
+        font-weight: 600;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: left;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+    }
+    .quick-action-btn:hover { background-color: var(--color-cream); color: var(--color-sage); border-color: var(--color-taupe); }
+    .quick-action-icon { font-size: 1.5rem; }
+</style>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12 d-flex justify-content-between align-items-end">
+        <div>
+            <span class="fs-4 d-block mb-1">👋 Welcome back, <strong class="text-sage">{{ session.get('company_name', 'Admin') }}</strong></span>
+            <h2 class="dash-header mb-0">Business Overview</h2>
+        </div>
+        <div class="text-end text-muted fw-medium small">
+            {{ current_date }} </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+        <div class="metric-card">
+            <div class="metric-icon icon-sage">📈</div>
+            <div class="metric-title">Today's Revenue</div>
+            <h3 class="metric-value">₹{{ "%.2f"|format(metrics.today_revenue | default(0)) }}</h3>
+            <div class="metric-subtitle"><span class="trend-up">↑ {{ metrics.today_invoices | default(0) }}</span> invoices generated</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="metric-card">
+            <div class="metric-icon icon-terracotta">💰</div>
+            <div class="metric-title">Monthly Revenue</div>
+            <h3 class="metric-value">₹{{ "%.2f"|format(metrics.month_revenue | default(0)) }}</h3>
+            <div class="metric-subtitle">Gross sales this month</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="metric-card">
+            <div class="metric-icon icon-taupe">🏛️</div>
+            <div class="metric-title">GST Collected (Month)</div>
+            <h3 class="metric-value">₹{{ "%.2f"|format(metrics.month_tax | default(0)) }}</h3>
+            <div class="metric-subtitle">Tax liability estimate</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="metric-card">
+            <div class="metric-icon icon-sage" style="background-color: rgba(212, 194, 173, 0.3);">📦</div>
+            <div class="metric-title">Inventory Size</div>
+            <h3 class="metric-value">{{ metrics.total_products | default(0) }}</h3>
+            <div class="metric-subtitle">Active products in catalog</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card card-glass border-0 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center rounded-top-4">
+                <h5 class="mb-0 text-sage fw-bold">Recent Invoices</h5>
+                <a href="/billing/history" class="btn btn-sm btn-outline-taupe fw-bold">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead style="background-color: #F8F5F1;">
+                            <tr>
+                                <th class="ps-4 text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Invoice</th>
+                                <th class="text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Customer</th>
+                                <th class="text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Amount</th>
+                                <th class="pe-4 text-end text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inv in recent_invoices %}
+                            <tr>
+                                <td class="ps-4"><span style="background: var(--color-cream); color: var(--color-taupe); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">#{{ inv.invoice_number }}</span></td>
+                                <td><strong class="text-dark">{{ inv.customer.name }}</strong></td>
+                                <td class="fw-bold" style="color: var(--color-sage);">₹{{ "%.2f"|format(inv.grand_total) }}</td>
+                                <td class="pe-4 text-end text-muted fw-medium">{{ inv.created_at.strftime('%b %d, %Y') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No transactions yet today.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-glass border-0 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
+                <h5 class="mb-0 text-sage fw-bold">Quick Actions</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="d-flex flex-column gap-3">
+                    <a href="/billing" class="quick-action-btn">
+                        <span class="quick-action-icon">🛒</span>
+                        <div>
+                            <div class="fw-bold" style="color: var(--text-dark);">Point of Sale</div>
+                            <div class="small text-muted">Create a new bill</div>
+                        </div>
+                    </a>
+                    
+                    <a href="/inventory/add-product" class="quick-action-btn">
+                        <span class="quick-action-icon">📦</span>
+                        <div>
+                            <div class="fw-bold" style="color: var(--text-dark);">Manage Inventory</div>
+                            <div class="small text-muted">Add or update products</div>
+                        </div>
+                    </a>
+
+                    <a href="/billing/history" class="quick-action-btn">
+                        <span class="quick-action-icon">📑</span>
+                        <div>
+                            <div class="fw-bold" style="color: var(--text-dark);">Invoice History</div>
+                            <div class="small text-muted">Search past transactions</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

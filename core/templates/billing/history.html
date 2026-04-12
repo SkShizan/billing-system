@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .history-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
+    
+    /* Search Bar Styling */
+    .search-wrapper {
+        background-color: #F8F5F1;
+        border: 1px solid var(--color-sand);
+        border-radius: 12px;
+        padding: 6px;
+        display: flex;
+        gap: 8px;
+    }
+    .search-input-custom {
+        border: none;
+        background: transparent;
+        padding: 10px 16px;
+        font-weight: 500;
+        color: var(--text-dark);
+        box-shadow: none !important;
+    }
+    .search-input-custom::placeholder { color: var(--color-taupe); opacity: 0.7; }
+    .search-input-custom:focus { outline: none; background: white; border-radius: 8px; }
+    
+    /* Data Table Styling */
+    .table-history { width: 100%; margin-bottom: 0; }
+    .table-history th { 
+        background-color: #F8F5F1; 
+        color: var(--color-sage); 
+        font-size: 0.85rem; 
+        text-transform: uppercase; 
+        padding: 1rem 1.5rem; 
+        border-bottom: 2px solid var(--color-sand); 
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .table-history td { 
+        padding: 1.25rem 1.5rem; 
+        border-bottom: 1px solid rgba(212, 194, 173, 0.3); 
+        vertical-align: middle; 
+        transition: background-color 0.2s ease;
+    }
+    .table-history tbody tr:hover td {
+        background-color: rgba(239, 223, 204, 0.15); /* Soft cream hover */
+    }
+
+    /* Badges & Accents */
+    .inv-badge {
+        background-color: var(--color-cream);
+        color: var(--color-taupe);
+        border: 1px solid var(--color-sand);
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+    .amount-text { color: var(--color-sage); font-weight: 700; font-size: 1.1rem; }
+</style>
+
+<div class="row mt-4 mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <span class="fs-3 me-2 text-taupe">📑</span>
+            <h2 class="history-header mb-0">Invoice History</h2>
+        </div>
+        <a href="/billing" class="btn btn-terracotta fw-bold px-4 py-2 shadow-sm">+ Create New Bill</a>
+    </div>
+</div>
+
+<div class="card card-glass border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
+        <form method="GET" action="/billing/history" class="search-wrapper w-100 w-md-75 w-lg-50">
+            <input type="text" name="search" class="form-control search-input-custom flex-grow-1" 
+                   placeholder="Search by Invoice ID, Customer Name, or Phone..." 
+                   value="{{ search_query or '' }}">
+            <button type="submit" class="btn btn-sage px-4 fw-bold rounded-3">Search</button>
+            {% if search_query %}
+                <a href="/billing/history" class="btn btn-outline-taupe px-3 rounded-3 d-flex align-items-center">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+    
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-history">
+                <thead>
+                    <tr>
+                        <th>Invoice No.</th>
+                        <th>Date & Time</th>
+                        <th>Customer Details</th>
+                        <th>Total Amount</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td>
+                            <span class="inv-badge">#{{ inv.invoice_number }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ inv.created_at.strftime('%d %b %Y') }}</div>
+                            <small class="text-muted fw-medium">{{ inv.created_at.strftime('%I:%M %p') }}</small>
+                        </td>
+                        <td>
+                            <strong style="color: var(--color-sage);">{{ inv.customer.name }}</strong><br>
+                            <small class="text-muted fw-medium">+91 {{ inv.customer.phone_number }}</small>
+                        </td>
+                        <td class="amount-text">
+                            ₹{{ "%.2f"|format(inv.grand_total) }}
+                        </td>
+                        <td class="text-end">
+                            <a href="/billing/invoice/{{ inv.id }}" class="btn btn-sm btn-outline-taupe px-3 fw-bold rounded-3">View PDF</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <div class="fs-1 mb-3">📭</div>
+                            <h5 class="fw-bold text-taupe">No Invoices Found</h5>
+                            <p class="mb-0">{% if search_query %}Try adjusting your search terms.{% else %}You haven't generated any invoices yet.{% endif %}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {% if pagination and pagination.pages > 1 %}
+    <div class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
+        <small class="text-muted fw-medium">Page {{ pagination.page }} of {{ pagination.pages }}</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0 gap-1">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link text-sage border-0 bg-light rounded-3 px-3" href="{{ url_for('billing.history', page=pagination.prev_num, search=search_query) }}">← Prev</a>
+                </li>
+                {% endif %}
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold" href="{{ url_for('billing.history', page=pagination.next_num, search=search_query) }}">Next →</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

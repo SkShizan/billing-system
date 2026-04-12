@@ -1,105 +1,120 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .admin-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
+    .form-control-admin { border: 1px solid var(--color-sand); border-radius: 8px; background-color: #F8F5F1; transition: all 0.2s; }
+    .form-control-admin:focus { background-color: #ffffff; border-color: var(--color-sage); box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15); outline: none; }
+    .form-label { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; }
+    .table-admin th { background-color: #F8F5F1; color: var(--color-sage); font-size: 0.85rem; text-transform: uppercase; padding: 1rem; border-bottom: 2px solid var(--color-sand); }
+    .table-admin td { padding: 1rem; border-bottom: 1px solid rgba(212, 194, 173, 0.3); vertical-align: middle; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-    <h2>Client Company Management</h2>
+    <div class="d-flex align-items-center">
+        <span class="fs-3 me-2 text-sage">🏢</span>
+        <h2 class="admin-header mb-0">Tenant Management</h2>
+    </div>
     <div>
-        <a href="/developer/dashboard" class="btn btn-outline-secondary btn-sm me-2">Back to HSN DB</a>
-        <a href="/developer/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+        <a href="/developer/dashboard" class="btn btn-outline-taupe btn-sm me-2 fw-bold">← Back to HSN DB</a>
     </div>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-{% for category, message in messages %}
-<div class="alert alert-{{ category }}">{{ message }}</div>
-{% endfor %}
-{% endif %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} rounded-3 shadow-sm border-0" style="background-color: var(--color-cream); color: var(--color-sage);">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
 {% endwith %}
 
 <div class="row">
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">Register New Company</h5>
+        <div class="card card-glass border-0 mb-4 p-2">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h5 class="mb-0 text-sage fw-bold">Register New Tenant</h5>
             </div>
             <div class="card-body">
                 <form action="/developer/companies/add" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label class="fw-bold">Company/Business Name</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <label class="form-label">Business Name</label>
+                        <input type="text" name="name" class="form-control form-control-admin" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="fw-bold">Complete Address</label>
-                        <textarea name="address" class="form-control" rows="2" placeholder="123 Tech Park, Sector 5..."
-                            required></textarea>
+                        <label class="form-label">Complete Address</label>
+                        <textarea name="address" class="form-control form-control-admin" rows="2" placeholder="HQ Address..." required></textarea>
                     </div>
+                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="fw-bold">GSTIN</label>
-                            <input type="text" name="gstin" class="form-control" placeholder="19ABCDE1234F1Z5" required>
+                            <label class="form-label">GSTIN</label>
+                            <input type="text" name="gstin" class="form-control form-control-admin" placeholder="19ABC..." required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Email</label>
-                            <input type="email" name="email" class="form-control" placeholder="contact@company.com"
-                                required>
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control form-control-admin" placeholder="@company.com" required>
                         </div>
                     </div>
-                    <div class="row border-top pt-3 mt-2">
+                    
+                    <div class="row border-top pt-3 mt-2" style="border-color: var(--color-sand) !important;">
                         <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Login ID</label>
-                            <input type="text" name="login_id" class="form-control" placeholder="Unique username"
-                                required>
+                            <label class="form-label">Login ID</label>
+                            <input type="text" name="login_id" class="form-control form-control-admin" placeholder="Username" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control form-control-admin" required>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="fw-bold">Company Logo (For Invoice)</label>
-                        <input type="file" name="logo" class="form-control" accept="image/*">
+                        <label class="form-label">Company Logo</label>
+                        <input type="file" name="logo" class="form-control form-control-admin" accept="image/*">
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Create Tenant Workspace</button>
+                    <button type="submit" class="btn btn-sage w-100 py-2 fw-bold shadow-sm">Provision Workspace</button>
                 </form>
             </div>
         </div>
     </div>
 
     <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Active Tenants</h5>
+        <div class="card card-glass border-0">
+            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
+                <h5 class="mb-0 text-sage fw-bold">Active Workspaces</h5>
             </div>
             <div class="card-body p-0">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-light">
+                <table class="table table-admin mb-0">
+                    <thead>
                         <tr>
-                            <th>Logo</th>
+                            <th class="ps-4">Identity</th>
                             <th>Company Name</th>
                             <th>Login ID</th>
-                            <th>Registered On</th>
+                            <th class="pe-4 text-end">Onboarded</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for c in companies %}
                         <tr>
-                            <td>
+                            <td class="ps-4">
                                 {% if c.logo_path %}
-                                <img src="{{ url_for('static', filename=c.logo_path) }}" height="40"
-                                    class="rounded border">
+                                    <img src="{{ url_for('static', filename=c.logo_path) }}" height="40" class="rounded-3 border shadow-sm" style="border-color: var(--color-sand) !important; object-fit: cover; width: 40px;">
                                 {% else %}
-                                <span class="badge bg-secondary">No Logo</span>
+                                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted fw-bold" style="width: 40px; height: 40px; font-size: 10px; border: 1px solid var(--color-sand);">IMG</div>
                                 {% endif %}
                             </td>
-                            <td><strong>{{ c.name }}</strong></td>
-                            <td><code>{{ c.login_id }}</code></td>
-                            <td>{{ c.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td><strong class="text-dark">{{ c.name }}</strong></td>
+                            <td><code style="color: var(--color-taupe); background: var(--color-cream); padding: 4px 8px; border-radius: 6px;">{{ c.login_id }}</code></td>
+                            <td class="pe-4 text-end text-muted fw-medium">{{ c.created_at.strftime('%b %d, %Y') }}</td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="4" class="text-center py-4">No companies registered yet.</td>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <div class="fs-2 mb-2">🏢</div>
+                                No workspaces provisioned yet.
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

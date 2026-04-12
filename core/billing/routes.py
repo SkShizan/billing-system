@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, flash
 from core.models import db, Customer, Product, Invoice, InvoiceItem
 import uuid
+from sqlalchemy import or_
 
 billing_bp = Blueprint('billing', __name__)
 
@@ -101,3 +102,31 @@ def public_view_invoice(invoice_number):
     
     # Pass is_public=True so the template knows to hide internal buttons
     return render_template('billing/invoice_template.html', invoice=invoice, is_public=True)
+
+
+@billing_bp.route('/history')
+def history():
+    company_id = session.get('company_id')
+    search_query = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+
+    # Base query for the logged-in company
+    query = Invoice.query.filter_by(company_id=company_id).join(Customer)
+
+    # Apply search filter if present
+    if search_query:
+        query = query.filter(
+            or_(
+                Invoice.invoice_number.ilike(f"%{search_query}%"),
+                Customer.name.ilike(f"%{search_query}%"),
+                Customer.phone_number.ilike(f"%{search_query}%")
+            )
+        )
+
+    # Order by newest first and paginate
+    pagination = query.order_by(Invoice.created_at.desc()).paginate(page=page, per_page=15)
+
+    return render_template('billing/history.html', 
+                           invoices=pagination.items, 
+                           pagination=pagination, 
+                           search_query=search_query)

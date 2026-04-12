@@ -1,32 +1,93 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-header bg-dark text-white text-center">
-                <h4>Developer Portal</h4>
-            </div>
-            <div class="card-body">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                  {% if messages %}
-                    {% for category, message in messages %}
-                      <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                  {% endif %}
-                {% endwith %}
+<style>
+    .admin-login-wrapper {
+        min-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .admin-card {
+        border-radius: 24px;
+        border: none;
+        background: var(--text-dark); /* Very dark background from base palette */
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        padding: 3rem 2.5rem;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+    }
+    /* Elegant gradient bar at the top of the card */
+    .admin-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 6px;
+        background: linear-gradient(90deg, var(--color-taupe), var(--color-terracotta));
+    }
+    .admin-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255,255,255,0.05);
+        color: var(--color-sand);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1.5rem auto;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .admin-input {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 0.85rem 1.25rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    .admin-input:focus {
+        background: rgba(255,255,255,0.08);
+        border-color: var(--color-taupe);
+        color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(186, 142, 122, 0.2);
+        outline: none;
+    }
+    .admin-input::placeholder {
+        color: rgba(255,255,255,0.3);
+    }
+</style>
 
-                <form method="POST">
-                    <div class="mb-3">
-                        <label>Username</label>
-                        <input type="text" name="username" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Password</label>
-                        <input type="password" name="password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-dark w-100">Secure Login</button>
-                </form>
-            </div>
+<div class="admin-login-wrapper">
+    <div class="col-md-6 col-lg-4">
+        <div class="admin-card text-center">
+            
+            <div class="admin-icon">⚙️</div>
+            <h3 class="fw-bold mb-1" style="letter-spacing: -0.5px;">Developer Portal</h3>
+            <p class="small text-white-50 mb-4">Authorized Personnel Only</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert rounded-3 border-0 small text-start shadow-sm" style="background-color: rgba(255,255,255,0.1); color: var(--color-sand); border: 1px solid rgba(212, 194, 173, 0.2);">
+                      {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="text-start">
+                <div class="mb-3">
+                    <label class="form-label text-white-50 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Username</label>
+                    <input type="text" name="username" class="form-control admin-input" placeholder="admin" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-white-50 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Secure Password</label>
+                    <input type="password" name="password" class="form-control admin-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-terracotta w-100 btn-lg rounded-3 fw-bold py-3 mt-2">Authenticate Session</button>
+            </form>
+            
         </div>
     </div>
 </div>
