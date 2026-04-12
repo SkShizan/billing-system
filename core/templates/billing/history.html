@@ -5,24 +5,9 @@
     .history-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
     
     /* Search Bar Styling */
-    .search-wrapper {
-        background-color: #F8F5F1;
-        border: 1px solid var(--color-sand);
-        border-radius: 12px;
-        padding: 6px;
-        display: flex;
-        gap: 8px;
-    }
-    .search-input-custom {
-        border: none;
-        background: transparent;
-        padding: 10px 16px;
-        font-weight: 500;
-        color: var(--text-dark);
-        box-shadow: none !important;
-    }
-    .search-input-custom::placeholder { color: var(--color-taupe); opacity: 0.7; }
-    .search-input-custom:focus { outline: none; background: white; border-radius: 8px; }
+    .search-wrapper-history { display: flex; gap: 8px; }
+    .search-input-custom { border: 1px solid var(--color-sand); border-radius: 8px; padding: 8px 16px; background-color: #F8F5F1; font-weight: 500; }
+    .search-input-custom:focus { background-color: #fff; border-color: var(--color-sage); outline: none; }
     
     /* Data Table Styling */
     .table-history { width: 100%; margin-bottom: 0; }
@@ -70,8 +55,10 @@
 </div>
 
 <div class="card card-glass border-0 shadow-sm">
-    <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
-        <form method="GET" action="/billing/history" class="search-wrapper w-100 w-md-75 w-lg-50">
+    <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0 text-sage fw-bold">Past Transactions</h5>
+        
+        <form method="GET" action="/billing/history" class="search-wrapper-history w-100 w-md-75 w-lg-50">
             <input type="text" name="search" class="form-control search-input-custom flex-grow-1" 
                    placeholder="Search by Invoice ID, Customer Name, or Phone..." 
                    value="{{ search_query or '' }}">
@@ -95,7 +82,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for inv in invoices %}
+                    {% for inv in pagination.items %}
                     <tr>
                         <td>
                             <span class="inv-badge">#{{ inv.invoice_number }}</span>
@@ -112,15 +99,20 @@
                             ₹{{ "%.2f"|format(inv.grand_total) }}
                         </td>
                         <td class="text-end">
-                            <a href="/billing/invoice/{{ inv.id }}" class="btn btn-sm btn-outline-taupe px-3 fw-bold rounded-3">View PDF</a>
+                            <a href="/billing/invoice/{{ inv.invoice_number }}" class="btn btn-sm btn-outline-taupe px-3 fw-bold rounded-3">View PDF</a>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
                         <td colspan="5" class="text-center py-5 text-muted">
                             <div class="fs-1 mb-3">📭</div>
-                            <h5 class="fw-bold text-taupe">No Invoices Found</h5>
-                            <p class="mb-0">{% if search_query %}Try adjusting your search terms.{% else %}You haven't generated any invoices yet.{% endif %}</p>
+                            {% if search_query %}
+                                <h5 class="fw-bold text-taupe">No Invoices Found</h5>
+                                <p class="mb-0">Try adjusting your search terms.</p>
+                            {% else %}
+                                <h5 class="fw-bold text-taupe">No History Yet</h5>
+                                <p class="mb-0">You haven't generated any invoices yet.</p>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -129,9 +121,9 @@
         </div>
     </div>
     
-    {% if pagination and pagination.pages > 1 %}
+    {% if pagination.pages > 1 %}
     <div class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
-        <small class="text-muted fw-medium">Page {{ pagination.page }} of {{ pagination.pages }}</small>
+        <small class="text-muted fw-medium">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
         <nav>
             <ul class="pagination pagination-sm mb-0 gap-1">
                 {% if pagination.has_prev %}

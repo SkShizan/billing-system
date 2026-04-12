@@ -116,8 +116,29 @@ def upload_csv():
 def manage_companies():
     if not is_logged_in(): return redirect(url_for('admin.login'))
     
-    companies = Company.query.order_by(Company.created_at.desc()).all()
-    return render_template('admin/companies.html', companies=companies)
+    # Get search and pagination parameters from the URL
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '').strip()
+    
+    query = Company.query
+
+    # Apply search filter if a query exists
+    if search_query:
+        query = query.filter(
+            (Company.name.ilike(f'%{search_query}%')) | 
+            (Company.login_id.ilike(f'%{search_query}%')) |
+            (Company.email.ilike(f'%{search_query}%')) |
+            (Company.gstin.ilike(f'%{search_query}%'))
+        )
+    
+    # Paginate with a strict limit of 10 companies per page
+    pagination = query.order_by(Company.created_at.desc()).paginate(page=page, per_page=10)
+    
+    return render_template(
+        'admin/companies.html', 
+        pagination=pagination, 
+        search_query=search_query
+    )
 
 @admin_bp.route('/companies/add', methods=['POST'])
 def add_company():

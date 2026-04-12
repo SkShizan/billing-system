@@ -49,9 +49,28 @@ def add_product():
         flash("Product added successfully!", "success")
         return redirect(url_for('inventory.add_product'))
 
-    # ISOLATION: Only load products belonging to THIS company
-    products = Product.query.filter_by(company_id=company_id).order_by(Product.id.desc()).all()
-    return render_template('inventory/add_product.html', products=products)
+    # --- NEW ADVANCED GET LOGIC (Search & Pagination) ---
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '').strip()
+
+    # Base query: Only load products belonging to THIS company
+    query = Product.query.filter_by(company_id=company_id)
+
+    # Apply search filter if present
+    if search_query:
+        query = query.filter(
+            (Product.name.ilike(f'%{search_query}%')) |
+            (Product.hsn_code.ilike(f'%{search_query}%'))
+        )
+
+    # Paginate with a limit of 10 items per page
+    pagination = query.order_by(Product.id.desc()).paginate(page=page, per_page=10)
+
+    return render_template(
+        'inventory/add_product.html', 
+        pagination=pagination, 
+        search_query=search_query
+    )
 
 @inventory_bp.route('/edit/<int:id>', methods=['POST'])
 def edit_product(id):

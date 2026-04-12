@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from core.models import db, Customer, Product, Invoice, InvoiceItem
 import uuid
 from sqlalchemy import or_
+from datetime import datetime
+from sqlalchemy import func
 
 billing_bp = Blueprint('billing', __name__)
 
@@ -106,12 +108,19 @@ def public_view_invoice(invoice_number):
 
 @billing_bp.route('/history')
 def history():
+    # SECURITY: Check if logged in
     company_id = session.get('company_id')
-    search_query = request.args.get('search', '').strip()
-    page = request.args.get('page', 1, type=int)
+    if not company_id:
+        flash("Please log in to view history.", "warning")
+        return redirect(url_for('auth.login'))
 
-    # Base query for the logged-in company
-    query = Invoice.query.filter_by(company_id=company_id).join(Customer)
+    # Get search and pagination parameters
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '').strip()
+
+    # Base query: Invoices for THIS company, joining Customer so we can search by name/phone
+    # Assuming you have models imported like: from core.models import Invoice, Customer
+    query = Invoice.query.join(Customer).filter(Invoice.company_id == company_id)
 
     # Apply search filter if present
     if search_query:
@@ -123,10 +132,73 @@ def history():
             )
         )
 
-    # Order by newest first and paginate
-    pagination = query.order_by(Invoice.created_at.desc()).paginate(page=page, per_page=15)
+    # Paginate with a limit of 10 invoices per page
+    pagination = query.order_by(Invoice.created_at.desc()).paginate(page=page, per_page=10)
 
-    return render_template('billing/history.html', 
-                           invoices=pagination.items, 
-                           pagination=pagination, 
-                           search_query=search_query)
+    return render_template(
+        'billing/history.html', 
+        pagination=pagination, 
+        search_query=search_query
+    )
+
+
+@billing_bp.route('/dashboard')
+def dashboard():
+    # 1. Security Check
+    company_id = session.get('company_id')
+    if not company_id:
+        return redirect('/auth/login')
+
+    # 2. Time Calculations
+    now = datetime.now()
+    # Midnight today
+    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Midnight on the 1st of the current month
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # 3. Fast Database Aggregations using func (O(1) memory transfer)
+    
+    # Today's Metrics (Revenue & Count)
+    today_stats = db.session.query(
+        func.sum(Invoice.grand_total).label('revenue'),
+        func.count(Invoice.id).label('count')
+    ).filter(
+        Invoice.company_id == company_id,
+        Invoice.created_at >= start_of_today
+    ).first()
+
+    # Monthly Metrics (Revenue & Tax)
+    month_stats = db.session.query(
+        func.sum(Invoice.grand_total).label('revenue'),
+        func.sum(Invoice.total_tax).label('tax')
+    ).filter(
+        Invoice.company_id == company_id,
+        Invoice.created_at >= start_of_month
+    ).first()
+
+    # Inventory Metric (Active Products)
+    total_products = Product.query.filter_by(company_id=company_id).count()
+
+    # 4. Fetch Recent Transactions (Limit to 5 for speed)
+    recent_invoices = Invoice.query.filter_by(company_id=company_id) \
+        .order_by(Invoice.created_at.desc()) \
+        .limit(5).all()
+
+    # 5. Handle None values (If there are no sales yet, func.sum returns None)
+    metrics = {
+        'today_revenue': today_stats.revenue or 0.0,
+        'today_invoices': today_stats.count or 0,
+        'month_revenue': month_stats.revenue or 0.0,
+        'month_tax': month_stats.tax or 0.0,
+        'total_products': total_products
+    }
+
+    # 6. Format Date for the UI
+    current_date_str = now.strftime('%A, %b %d')
+
+    return render_template(
+        'dashboard/index.html', 
+        metrics=metrics,
+        recent_invoices=recent_invoices,
+        current_date=current_date_str
+    )

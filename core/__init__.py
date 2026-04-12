@@ -27,7 +27,8 @@ def create_app():
     def home():
         # 1. Check if a regular company is logged in
         if 'company_id' in session:
-            return redirect(url_for('billing.index'))
+            # 🎯 CHANGE THIS LINE to point to the dashboard!
+            return redirect(url_for('billing.dashboard')) 
         
         # 2. Check if the developer is logged in
         elif 'is_developer' in session:

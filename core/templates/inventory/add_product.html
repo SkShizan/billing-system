@@ -8,6 +8,11 @@
     .form-label { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; }
     .table-inv th { background-color: #F8F5F1; color: var(--color-sage); font-size: 0.85rem; text-transform: uppercase; padding: 1rem; border-bottom: 2px solid var(--color-sand); }
     .table-inv td { padding: 1rem; border-bottom: 1px solid rgba(212, 194, 173, 0.3); vertical-align: middle; }
+    
+    /* Search Bar Specific */
+    .search-wrapper-inv { display: flex; gap: 8px; }
+    .search-input-custom { border: 1px solid var(--color-sand); border-radius: 8px; padding: 8px 16px; background-color: #F8F5F1; font-weight: 500; }
+    .search-input-custom:focus { background-color: #fff; border-color: var(--color-sage); outline: none; }
 </style>
 
 <div class="row mt-4 mb-3">
@@ -73,9 +78,18 @@
 
     <div class="col-md-8">
         <div class="card card-glass border-0">
-            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
+            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0 text-sage fw-bold">Current Stock</h5>
+                
+                <form method="GET" action="/inventory/add-product" class="search-wrapper-inv w-100 w-lg-50">
+                    <input type="text" name="search" class="form-control search-input-custom flex-grow-1" placeholder="Search product or HSN..." value="{{ search_query or '' }}">
+                    <button type="submit" class="btn btn-sage px-3 fw-bold rounded-3">Search</button>
+                    {% if search_query %}
+                        <a href="/inventory/add-product" class="btn btn-outline-taupe px-3 rounded-3 d-flex align-items-center">Clear</a>
+                    {% endif %}
+                </form>
             </div>
+            
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
                     <table class="table table-inv mb-0">
@@ -89,7 +103,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for p in products %}
+                            {% for p in pagination.items %}
                             <tr>
                                 <td class="ps-4">
                                     {% if p.image_path %}
@@ -157,7 +171,7 @@
                             <tr>
                                 <td colspan="5" class="text-center text-muted py-5">
                                     <div class="fs-1 mb-2">📦</div>
-                                    No products in inventory yet. Add your first item!
+                                    {% if search_query %} No products match your search. {% else %} No products in inventory yet. Add your first item! {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -165,6 +179,27 @@
                     </table>
                 </div>
             </div>
+
+            {% if pagination.pages > 1 %}
+            <div class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
+                <small class="text-muted fw-medium">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0 gap-1">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3" href="{{ url_for('inventory.add_product', page=pagination.prev_num, search=search_query) }}">← Prev</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold" href="{{ url_for('inventory.add_product', page=pagination.next_num, search=search_query) }}">Next →</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

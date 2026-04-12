@@ -7,6 +7,11 @@
     .form-label { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; }
     .table-admin th { background-color: #F8F5F1; color: var(--color-sage); font-size: 0.85rem; text-transform: uppercase; padding: 1rem; border-bottom: 2px solid var(--color-sand); }
     .table-admin td { padding: 1rem; border-bottom: 1px solid rgba(212, 194, 173, 0.3); vertical-align: middle; }
+    
+    /* Search Bar Specific */
+    .search-wrapper-admin { display: flex; gap: 8px; }
+    .search-input-custom { border: 1px solid var(--color-sand); border-radius: 8px; padding: 8px 16px; background-color: #F8F5F1; font-weight: 500; }
+    .search-input-custom:focus { background-color: #fff; border-color: var(--color-sage); outline: none; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
@@ -82,9 +87,18 @@
 
     <div class="col-md-8">
         <div class="card card-glass border-0">
-            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
+            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0 text-sage fw-bold">Active Workspaces</h5>
+                
+                <form method="GET" action="/developer/companies" class="search-wrapper-admin w-100 w-lg-50">
+                    <input type="text" name="search" class="form-control search-input-custom flex-grow-1" placeholder="Search name, ID, email..." value="{{ search_query or '' }}">
+                    <button type="submit" class="btn btn-sage px-3 fw-bold rounded-3">Search</button>
+                    {% if search_query %}
+                        <a href="/developer/companies" class="btn btn-outline-taupe px-3 rounded-3 d-flex align-items-center">Clear</a>
+                    {% endif %}
+                </form>
             </div>
+            
             <div class="card-body p-0">
                 <table class="table table-admin mb-0">
                     <thead>
@@ -96,7 +110,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for c in companies %}
+                        {% for c in pagination.items %}
                         <tr>
                             <td class="ps-4">
                                 {% if c.logo_path %}
@@ -105,7 +119,10 @@
                                     <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted fw-bold" style="width: 40px; height: 40px; font-size: 10px; border: 1px solid var(--color-sand);">IMG</div>
                                 {% endif %}
                             </td>
-                            <td><strong class="text-dark">{{ c.name }}</strong></td>
+                            <td>
+                                <strong class="text-dark">{{ c.name }}</strong><br>
+                                <small class="text-muted fw-medium">{{ c.email }}</small>
+                            </td>
                             <td><code style="color: var(--color-taupe); background: var(--color-cream); padding: 4px 8px; border-radius: 6px;">{{ c.login_id }}</code></td>
                             <td class="pe-4 text-end text-muted fw-medium">{{ c.created_at.strftime('%b %d, %Y') }}</td>
                         </tr>
@@ -113,13 +130,34 @@
                         <tr>
                             <td colspan="4" class="text-center py-5 text-muted">
                                 <div class="fs-2 mb-2">🏢</div>
-                                No workspaces provisioned yet.
+                                {% if search_query %} No workspaces match your search. {% else %} No workspaces provisioned yet. {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            {% if pagination.pages > 1 %}
+            <div class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
+                <small class="text-muted fw-medium">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0 gap-1">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3" href="{{ url_for('admin.manage_companies', page=pagination.prev_num, search=search_query) }}">← Prev</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold" href="{{ url_for('admin.manage_companies', page=pagination.next_num, search=search_query) }}">Next →</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
