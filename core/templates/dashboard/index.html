@@ -1,183 +1,348 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-    .dash-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
-    
-    /* Metric Cards */
-    .metric-card {
+    /* --- CSS Grid for Perfect Responsiveness --- */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    /* --- High-End Card Design --- */
+    .saas-card {
+        background: #ffffff;
         border-radius: 16px;
-        padding: 24px;
         border: 1px solid rgba(212, 194, 173, 0.4);
-        background-color: #ffffff;
-        box-shadow: 0 10px 30px rgba(102, 121, 107, 0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        height: 100%;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(102, 121, 107, 0.05), 0 2px 4px -1px rgba(102, 121, 107, 0.03);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: space-between;
     }
-    .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px rgba(102, 121, 107, 0.1);
+    .saas-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(102, 121, 107, 0.1), 0 4px 6px -2px rgba(102, 121, 107, 0.05);
+        border-color: rgba(212, 194, 173, 0.8);
     }
-    .metric-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        margin-bottom: 16px;
-    }
-    .icon-sage { background-color: rgba(102, 121, 107, 0.1); color: var(--color-sage); }
-    .icon-terracotta { background-color: rgba(215, 161, 132, 0.1); color: var(--color-terracotta); }
-    .icon-taupe { background-color: rgba(186, 142, 122, 0.1); color: var(--color-taupe); }
-    
-    .metric-title { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .metric-value { font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0; line-height: 1.2; }
-    .metric-subtitle { font-size: 0.85rem; color: #718096; font-weight: 500; margin-top: 8px; }
-    .trend-up { color: #38a169; font-weight: 600; }
 
-    /* Quick Actions */
-    .quick-action-btn {
-        background-color: #F8F5F1;
-        border: 1px solid var(--color-sand);
-        color: var(--color-sage);
-        font-weight: 600;
-        padding: 16px;
-        border-radius: 12px;
-        text-align: left;
-        transition: all 0.2s;
+    /* --- The Hero Card (Gross Sales) --- */
+    .saas-card-hero {
+        background: linear-gradient(135deg, var(--color-sage) 0%, #4a5c50 100%);
+        border: none;
+        color: #ffffff;
+        box-shadow: 0 10px 15px -3px rgba(102, 121, 107, 0.3);
+    }
+    .saas-card-hero:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(102, 121, 107, 0.4);
+    }
+
+    /* --- Typography & Icons --- */
+    .metric-icon-wrapper {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
-        gap: 12px;
-        text-decoration: none;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
     }
-    .quick-action-btn:hover { background-color: var(--color-cream); color: var(--color-sage); border-color: var(--color-taupe); }
-    .quick-action-icon { font-size: 1.5rem; }
+    .bg-sage-light { background-color: rgba(102, 121, 107, 0.1); color: var(--color-sage); }
+    .bg-terra-light { background-color: rgba(215, 161, 132, 0.1); color: var(--color-terracotta); }
+    .bg-taupe-light { background-color: rgba(186, 142, 122, 0.1); color: var(--color-taupe); }
+    .bg-white-light { background-color: rgba(255, 255, 255, 0.2); color: #ffffff; }
+
+    .metric-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--color-taupe);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    .saas-card-hero .metric-label { color: rgba(255, 255, 255, 0.8); }
+
+    .metric-value {
+        font-size: 1.875rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        line-height: 1.1;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+    .saas-card-hero .metric-value { color: #ffffff; }
+
+    .metric-subtext {
+        font-size: 0.8125rem;
+        color: #718096;
+        font-weight: 500;
+    }
+    .saas-card-hero .metric-subtext { color: rgba(255, 255, 255, 0.7); }
+    
+    .badge-trend {
+        background: rgba(56, 161, 105, 0.1);
+        color: #2f855a;
+        padding: 0.15rem 0.4rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+    }
+
+    /* --- List & Table Areas --- */
+    .panel-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(212, 194, 173, 0.4);
+        box-shadow: 0 4px 6px -1px rgba(102, 121, 107, 0.02);
+        height: 100%;
+    }
+    .panel-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(212, 194, 173, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap; /* Allows search bar to wrap on very small screens */
+        gap: 1rem;
+    }
+
+    /* --- Modern Quick Actions --- */
+    .action-link {
+        display: flex;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(212, 194, 173, 0.2);
+        transition: background-color 0.2s;
+    }
+    .action-link:last-child { border-bottom: none; }
+    .action-link:hover { background-color: #fcfbf9; }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        background: #F8F5F1;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-right: 1rem;
+    }
+    .action-text h6 { margin: 0; font-weight: 700; color: var(--text-dark); font-size: 0.95rem; }
+    .action-text p { margin: 0; font-size: 0.8125rem; color: #718096; }
+    .action-arrow { margin-left: auto; color: var(--color-sand); transition: transform 0.2s; }
+    .action-link:hover .action-arrow { transform: translateX(4px); color: var(--color-sage); }
+
+    /* --- Compact Search --- */
+    .compact-search {
+        display: flex;
+        background: #F8F5F1;
+        border-radius: 8px;
+        padding: 0.25rem;
+        border: 1px solid var(--color-sand);
+    }
+    .compact-search input {
+        border: none;
+        background: transparent;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        outline: none;
+        width: 100%;
+        max-width: 180px;
+    }
+    .compact-search button {
+        background: var(--color-sage);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.25rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.8125rem;
+    }
+
+    /* --- Responsive Table Fixes --- */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+    .saas-table th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-taupe);
+        font-weight: 700;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(212, 194, 173, 0.4);
+        background: #fcfbf9;
+        white-space: nowrap; 
+    }
+    .saas-table td {
+        padding: 1.25rem 1.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(212, 194, 173, 0.2);
+        white-space: nowrap; 
+    }
 </style>
 
-<div class="row mt-4 mb-5">
-    <div class="col-12 d-flex justify-content-between align-items-end">
+<div class="d-flex justify-content-between align-items-end mb-4 mt-2">
+    <div>
+        <span class="text-muted fw-medium" style="font-size: 0.9rem;">👋 Welcome back, <strong class="text-sage">{{ session.get('company_name', 'Admin') }}</strong></span>
+        <h2 class="fw-bold mb-0 mt-1" style="color: var(--text-dark); letter-spacing: -0.5px;">Overview</h2>
+    </div>
+    <div class="d-none d-sm-block text-taupe fw-semibold" style="font-size: 0.875rem;">
+        {{ current_date }}
+    </div>
+</div>
+
+<div class="metrics-grid">
+    <div class="saas-card">
+        <div class="metric-icon-wrapper bg-sage-light">📈</div>
         <div>
-            <span class="fs-4 d-block mb-1">👋 Welcome back, <strong class="text-sage">{{ session.get('company_name', 'Admin') }}</strong></span>
-            <h2 class="dash-header mb-0">Business Overview</h2>
+            <div class="metric-label">Today's Revenue</div>
+            <div class="metric-value">₹{{ "%.2f"|format(metrics.today_revenue | default(0)) }}</div>
+            <div class="metric-subtext"><span class="badge-trend">↑ {{ metrics.today_invoices | default(0) }}</span> bills today</div>
         </div>
-        <div class="text-end text-muted fw-medium small">
-            {{ current_date }} </div>
+    </div>
+    
+    <div class="saas-card">
+        <div class="metric-icon-wrapper bg-terra-light">💰</div>
+        <div>
+            <div class="metric-label">Total Revenue (MTD)</div>
+            <div class="metric-value">₹{{ "%.2f"|format(metrics.month_revenue | default(0)) }}</div>
+            <div class="metric-subtext">Gross sales + GST</div>
+        </div>
+    </div>
+
+    <div class="saas-card saas-card-hero">
+        <div class="metric-icon-wrapper bg-white-light">📊</div>
+        <div>
+            <div class="metric-label">Gross Sales (Pre-Tax)</div>
+            <div class="metric-value">₹{{ "%.2f"|format(metrics.month_gross_sales | default(0)) }}</div>
+            <div class="metric-subtext">Your actual earnings</div>
+        </div>
+    </div>
+
+    <div class="saas-card">
+        <div class="metric-icon-wrapper bg-taupe-light">🏛️</div>
+        <div>
+            <div class="metric-label">GST Collected (MTD)</div>
+            <div class="metric-value">₹{{ "%.2f"|format(metrics.month_tax | default(0)) }}</div>
+            <div class="metric-subtext">Tax liability to pay</div>
+        </div>
+    </div>
+
+    <div class="saas-card">
+        <div class="metric-icon-wrapper bg-sage-light" style="background-color: #F8F5F1;">📦</div>
+        <div>
+            <div class="metric-label">Inventory Size</div>
+            <div class="metric-value">{{ metrics.total_products | default(0) }}</div>
+            <div class="metric-subtext">Active catalog items</div>
+        </div>
     </div>
 </div>
 
 <div class="row g-4 mb-5">
-    <div class="col-md-6 col-lg-3">
-        <div class="metric-card">
-            <div class="metric-icon icon-sage">📈</div>
-            <div class="metric-title">Today's Revenue</div>
-            <h3 class="metric-value">₹{{ "%.2f"|format(metrics.today_revenue | default(0)) }}</h3>
-            <div class="metric-subtitle"><span class="trend-up">↑ {{ metrics.today_invoices | default(0) }}</span> invoices generated</div>
-        </div>
-    </div>
     
-    <div class="col-md-6 col-lg-3">
-        <div class="metric-card">
-            <div class="metric-icon icon-terracotta">💰</div>
-            <div class="metric-title">Monthly Revenue</div>
-            <h3 class="metric-value">₹{{ "%.2f"|format(metrics.month_revenue | default(0)) }}</h3>
-            <div class="metric-subtitle">Gross sales this month</div>
-        </div>
-    </div>
-
-    <div class="col-md-6 col-lg-3">
-        <div class="metric-card">
-            <div class="metric-icon icon-taupe">🏛️</div>
-            <div class="metric-title">GST Collected (Month)</div>
-            <h3 class="metric-value">₹{{ "%.2f"|format(metrics.month_tax | default(0)) }}</h3>
-            <div class="metric-subtitle">Tax liability estimate</div>
-        </div>
-    </div>
-
-    <div class="col-md-6 col-lg-3">
-        <div class="metric-card">
-            <div class="metric-icon icon-sage" style="background-color: rgba(212, 194, 173, 0.3);">📦</div>
-            <div class="metric-title">Inventory Size</div>
-            <h3 class="metric-value">{{ metrics.total_products | default(0) }}</h3>
-            <div class="metric-subtitle">Active products in catalog</div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="card card-glass border-0 h-100">
-            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center rounded-top-4">
-                <h5 class="mb-0 text-sage fw-bold">Recent Invoices</h5>
-                <a href="/billing/history" class="btn btn-sm btn-outline-taupe fw-bold">View All</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table mb-0 align-middle">
-                        <thead style="background-color: #F8F5F1;">
-                            <tr>
-                                <th class="ps-4 text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Invoice</th>
-                                <th class="text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Customer</th>
-                                <th class="text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Amount</th>
-                                <th class="pe-4 text-end text-sage text-uppercase" style="font-size: 0.8rem; font-weight: 600;">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for inv in recent_invoices %}
-                            <tr>
-                                <td class="ps-4"><span style="background: var(--color-cream); color: var(--color-taupe); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">#{{ inv.invoice_number }}</span></td>
-                                <td><strong class="text-dark">{{ inv.customer.name }}</strong></td>
-                                <td class="fw-bold" style="color: var(--color-sage);">₹{{ "%.2f"|format(inv.grand_total) }}</td>
-                                <td class="pe-4 text-end text-muted fw-medium">{{ inv.created_at.strftime('%b %d, %Y') }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">No transactions yet today.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <div class="col-12 col-xl-8">
+        <div class="panel-card">
+            <div class="panel-header">
+                <h5 class="mb-0 fw-bold text-sage" style="font-size: 1.1rem;">Recent Transactions</h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <form method="GET" action="/billing/history" class="compact-search">
+                        <input type="text" name="search" placeholder="Search bills...">
+                        <button type="submit">Search</button>
+                    </form>
                 </div>
             </div>
+            
+            <div class="table-responsive">
+                <table class="table saas-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th class="text-end">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in recent_invoices %}
+                        <tr>
+                            <td>
+                                <span style="background: #F8F5F1; color: var(--text-dark); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8125rem; border: 1px solid var(--color-sand);">
+                                    #{{ inv.invoice_number }}
+                                </span>
+                            </td>
+                            <td><strong style="color: var(--text-dark); font-weight: 600;">{{ inv.customer.name }}</strong></td>
+                            <td class="fw-bold" style="color: var(--color-sage);">₹{{ "%.2f"|format(inv.grand_total) }}</td>
+                            <td class="text-end text-muted" style="font-size: 0.875rem;">{{ inv.created_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📭</div>
+                                No transactions recorded today.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if recent_invoices|length > 0 %}
+            <div class="p-3 border-top text-center" style="border-color: rgba(212, 194, 173, 0.2) !important;">
+                <a href="/billing/history" class="text-decoration-none fw-bold" style="color: var(--color-sage); font-size: 0.875rem;">View Complete History →</a>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="card card-glass border-0 h-100">
-            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
-                <h5 class="mb-0 text-sage fw-bold">Quick Actions</h5>
+    <div class="col-12 col-xl-4">
+        <div class="panel-card">
+            <div class="panel-header">
+                <h5 class="mb-0 fw-bold text-sage" style="font-size: 1.1rem;">Quick Actions</h5>
             </div>
-            <div class="card-body px-4 pb-4">
-                <div class="d-flex flex-column gap-3">
-                    <a href="/billing" class="quick-action-btn">
-                        <span class="quick-action-icon">🛒</span>
-                        <div>
-                            <div class="fw-bold" style="color: var(--text-dark);">Point of Sale</div>
-                            <div class="small text-muted">Create a new bill</div>
-                        </div>
-                    </a>
-                    
-                    <a href="/inventory/add-product" class="quick-action-btn">
-                        <span class="quick-action-icon">📦</span>
-                        <div>
-                            <div class="fw-bold" style="color: var(--text-dark);">Manage Inventory</div>
-                            <div class="small text-muted">Add or update products</div>
-                        </div>
-                    </a>
+            <div class="d-flex flex-column">
+                <a href="/billing" class="action-link">
+                    <div class="action-icon">🛒</div>
+                    <div class="action-text">
+                        <h6>New Sale (POS)</h6>
+                        <p>Create a new customer invoice</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
+                
+                <a href="/inventory/add-product" class="action-link">
+                    <div class="action-icon">📦</div>
+                    <div class="action-text">
+                        <h6>Manage Inventory</h6>
+                        <p>Add or update product stock</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
 
-                    <a href="/billing/history" class="quick-action-btn">
-                        <span class="quick-action-icon">📑</span>
-                        <div>
-                            <div class="fw-bold" style="color: var(--text-dark);">Invoice History</div>
-                            <div class="small text-muted">Search past transactions</div>
-                        </div>
-                    </a>
-                </div>
+                <a href="/billing/history" class="action-link">
+                    <div class="action-icon">📑</div>
+                    <div class="action-text">
+                        <h6>Invoice History</h6>
+                        <p>Search and reprint past bills</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
+
+                <a href="/billing/customers" class="action-link">
+                    <div class="action-icon">👥</div>
+                    <div class="action-text">
+                        <h6>Customer CRM</h6>
+                        <p>View top clients & lifetime spend</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}

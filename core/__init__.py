@@ -16,11 +16,13 @@ def create_app():
     from .inventory.routes import inventory_bp
     from .billing.routes import billing_bp
     from .admin.routes import admin_bp
+    from core.settings.routes import settings_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(inventory_bp, url_prefix='/inventory')
     app.register_blueprint(billing_bp, url_prefix='/billing')
     app.register_blueprint(admin_bp, url_prefix='/developer')
+    app.register_blueprint(settings_bp)
 
     # --- THE SECURE TRAFFIC COP ---
     @app.route('/')

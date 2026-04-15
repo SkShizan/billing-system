@@ -1,15 +1,63 @@
 import csv
-import io
+import io, os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash,current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 from core.extensions import db
 from core.models import HSNDictionary
+from core.models import SMTPSettings
 from core.models import Company
+from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__)
 
 DEV_USERNAME = "developer"
 DEV_PASSWORD_HASH = generate_password_hash("admin123") 
+
+@admin_bp.route('/companies/edit/<int:id>', methods=['POST'])
+def edit_company(id):
+    if not is_logged_in(): return redirect(url_for('admin.login'))
+    
+    company = Company.query.get_or_404(id)
+    
+    # 1. Update Basic Info
+    company.name = request.form.get('name', company.name).strip()
+    company.email = request.form.get('email', company.email).strip()
+    company.address = request.form.get('address', company.address).strip()
+    company.gstin = request.form.get('gstin', company.gstin).strip()
+    
+    # 2. Update Password (Only if the superadmin typed a new one)
+    new_password = request.form.get('password')
+    if new_password and len(new_password.strip()) > 0:
+        company.password_hash = generate_password_hash(new_password)
+        
+    # 3. Handle Logo Override
+    logo_file = request.files.get('logo')
+    if logo_file and logo_file.filename != '':
+        filename = secure_filename(f"tenant_{company.id}_{logo_file.filename}")
+        upload_dir = os.path.join(current_app.root_path, 'static', 'logos')
+        os.makedirs(upload_dir, exist_ok=True)
+        logo_file.save(os.path.join(upload_dir, filename))
+        company.logo_path = f'logos/{filename}'
+        
+    db.session.commit()
+    flash(f"Tenant '{company.name}' updated successfully.", "success")
+    return redirect(url_for('admin.manage_companies'))
+
+
+@admin_bp.route('/companies/delete/<int:id>', methods=['POST'])
+def delete_company(id):
+    if not is_logged_in(): return redirect(url_for('admin.login'))
+    
+    company = Company.query.get_or_404(id)
+    company_name = company.name
+    
+    # Due to cascade rules on the database models, deleting the company 
+    # will also automatically delete their products and invoices.
+    db.session.delete(company)
+    db.session.commit()
+    
+    flash(f"Tenant '{company_name}' and all associated data have been permanently deleted.", "danger")
+    return redirect(url_for('admin.manage_companies'))
 
 def is_logged_in():
     return session.get('is_developer') is True
@@ -180,3 +228,30 @@ def add_company():
     flash(f"Company '{name}' registered successfully!", "success")
     
     return redirect(url_for('admin.manage_companies'))
+
+
+
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if not is_logged_in(): return redirect(url_for('admin.login'))
+    
+    # Get the existing settings, or create an empty object if none exists
+    smtp = SMTPSettings.query.first()
+    
+    if request.method == 'POST':
+        if not smtp:
+            smtp = SMTPSettings()
+            db.session.add(smtp)
+            
+        smtp.server = request.form.get('server').strip()
+        smtp.port = int(request.form.get('port', 587))
+        smtp.username = request.form.get('username').strip()
+        smtp.password = request.form.get('password').strip()
+        smtp.sender_email = request.form.get('sender_email').strip()
+        smtp.use_tls = 'use_tls' in request.form
+        
+        db.session.commit()
+        flash("System SMTP settings updated successfully!", "success")
+        return redirect(url_for('admin.settings'))
+        
+    return render_template('admin/settings.html', smtp=smtp)

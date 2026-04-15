@@ -184,12 +184,17 @@ def dashboard():
         .order_by(Invoice.created_at.desc()) \
         .limit(5).all()
 
-    # 5. Handle None values (If there are no sales yet, func.sum returns None)
+    # 5. Handle None values and calculate Gross Sales (THE FIX IS HERE)
+    month_rev = month_stats.revenue or 0.0
+    month_tx = month_stats.tax or 0.0
+    month_gross = month_rev - month_tx
+
     metrics = {
         'today_revenue': today_stats.revenue or 0.0,
         'today_invoices': today_stats.count or 0,
-        'month_revenue': month_stats.revenue or 0.0,
-        'month_tax': month_stats.tax or 0.0,
+        'month_revenue': month_rev,
+        'month_tax': month_tx,
+        'month_gross_sales': month_gross,
         'total_products': total_products
     }
 
@@ -201,4 +206,45 @@ def dashboard():
         metrics=metrics,
         recent_invoices=recent_invoices,
         current_date=current_date_str
+    )
+
+
+@billing_bp.route('/customers')
+def customers_directory():
+    # SECURITY: Check if logged in
+    company_id = session.get('company_id')
+    if not company_id:
+        flash("Please log in to view your customers.", "warning")
+        return redirect(url_for('auth.login'))
+
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '').strip()
+
+    # Create an aggregated query grouping by Customer
+    # We select the Customer object, count their invoices, sum their total spend, and get their latest visit
+    query = db.session.query(
+        Customer,
+        func.count(Invoice.id).label('total_visits'),
+        func.sum(Invoice.grand_total).label('lifetime_value'),
+        func.max(Invoice.created_at).label('last_visit')
+    ).join(Invoice, Customer.id == Invoice.customer_id) \
+     .filter(Invoice.company_id == company_id) \
+     .group_by(Customer.id)
+
+    # Apply search filter for name or phone number
+    if search_query:
+        query = query.filter(
+            or_(
+                Customer.name.ilike(f"%{search_query}%"),
+                Customer.phone_number.ilike(f"%{search_query}%")
+            )
+        )
+
+    # Order by their most recent visit, paginated
+    pagination = query.order_by(func.max(Invoice.created_at).desc()).paginate(page=page, per_page=10)
+
+    return render_template(
+        'billing/customers.html', 
+        pagination=pagination, 
+        search_query=search_query
     )

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .settings-header { color: var(--color-sage); font-weight: 800; letter-spacing: -0.5px; }
+    
+    .panel-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(212, 194, 173, 0.4);
+        box-shadow: 0 4px 6px -1px rgba(102, 121, 107, 0.02), 0 10px 15px -3px rgba(102, 121, 107, 0.05);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .panel-header {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+        border-bottom: 1px solid rgba(212, 194, 173, 0.2);
+    }
+    
+    .form-label-premium {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--color-taupe);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control-premium {
+        border: 1px solid var(--color-sand);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        background-color: #F8F5F1;
+        font-weight: 500;
+        color: var(--text-dark);
+        transition: all 0.2s ease;
+    }
+    .form-control-premium:focus {
+        background-color: #ffffff;
+        border-color: var(--color-sage);
+        box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.1);
+        outline: none;
+    }
+
+    .logo-preview-box {
+        width: 120px;
+        height: 120px;
+        border-radius: 16px;
+        border: 2px dashed var(--color-taupe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #fcfbf9;
+        margin-bottom: 1rem;
+    }
+    .logo-preview-box img { width: 100%; height: 100%; object-fit: contain; }
+    
+    .divider { height: 1px; background: rgba(212, 194, 173, 0.3); margin: 2rem 0; }
+</style>
+
+<div class="row mt-4 mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <span class="fs-3 me-2 text-taupe">⚙️</span>
+            <h2 class="settings-header mb-0">Workspace Settings</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} rounded-3 shadow-sm border-0 fw-bold" style="background-color: var(--color-cream); color: var(--color-sage);">
+                  ✓ {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+<form method="POST" action="/settings/" enctype="multipart/form-data">
+    <div class="row g-4">
+        
+        <div class="col-lg-4">
+            <div class="panel-card h-100">
+                <div class="panel-header">
+                    <h5 class="mb-0 fw-bold text-dark">Brand Identity</h5>
+                    <p class="text-muted small mb-0 mt-1">This logo appears on your printed invoices.</p>
+                </div>
+                <div class="card-body p-4 text-center d-flex flex-column align-items-center">
+                    
+                    <div class="logo-preview-box">
+                        {% if company.logo_path %}
+                            <img src="{{ url_for('static', filename=company.logo_path) }}" alt="Company Logo">
+                        {% else %}
+                            <span class="text-muted fw-bold" style="font-size: 0.8rem;">NO LOGO</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="w-100 text-start">
+                        <label class="form-label-premium">Upload New Logo</label>
+                        <input type="file" name="logo" class="form-control form-control-premium" accept="image/*">
+                        <small class="text-muted mt-2 d-block">Recommended size: 500x500px (PNG or JPG).</small>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5 class="mb-0 fw-bold text-dark">Business Profile</h5>
+                    <p class="text-muted small mb-0 mt-1">Update your legal business information.</p>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-premium">Business Name</label>
+                            <input type="text" name="name" class="form-control form-control-premium" value="{{ company.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-premium">Email Address</label>
+                            <input type="email" name="email" class="form-control form-control-premium" value="{{ company.email }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-premium">Complete Address</label>
+                            <textarea name="address" class="form-control form-control-premium" rows="2" required>{{ company.address }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-premium">GSTIN</label>
+                            <input type="text" name="gstin" class="form-control form-control-premium" value="{{ company.gstin }}" required>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <h5 class="fw-bold text-dark mb-3">Security</h5>
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-6">
+                            <label class="form-label-premium">Login ID</label>
+                            <input type="text" class="form-control form-control-premium text-muted" value="{{ company.login_id }}" readonly disabled style="background-color: #eee;">
+                            <small class="text-muted mt-1 d-block">Login ID cannot be changed.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-premium d-block">Account Password</label>
+                            <button type="button" class="btn btn-outline-taupe w-100 py-2 fw-bold d-flex justify-content-between align-items-center" onclick="requestOTP()" id="reqOtpBtn">
+                                <span>Change Password</span>
+                                <span>🔒</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-footer bg-light border-top-0 p-4 text-end" style="background-color: #fcfbf9 !important;">
+                    <button type="submit" class="btn fw-bold px-5 py-2 shadow-sm" style="background-color: var(--color-sage); color: white; border-radius: 8px;">Save Profile Changes</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title fw-bold text-sage">Secure Password Change</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="alert alert-info rounded-3 small fw-medium mb-4" style="background-color: #F8F5F1; border: 1px solid var(--color-sand); color: var(--color-taupe);">
+            We just sent a 6-digit verification code to <strong>{{ company.email }}</strong>.
+        </div>
+        
+        <form method="POST" action="/settings/">
+            <div class="mb-3">
+                <label class="form-label-premium">Enter 6-Digit OTP</label>
+                <input type="text" name="otp" class="form-control form-control-premium" placeholder="••••••" maxlength="6" autocomplete="off" required style="letter-spacing: 0.5rem; text-align: center; font-size: 1.2rem;">
+            </div>
+            <div class="mb-4">
+                <label class="form-label-premium">New Password</label>
+                <input type="password" name="new_password" class="form-control form-control-premium" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn w-100 py-2 fw-bold text-white shadow-sm" style="background-color: var(--color-terracotta); border-radius: 8px;">Verify & Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function requestOTP() {
+    const btn = document.getElementById('reqOtpBtn');
+    btn.innerHTML = '<span>Sending...</span> <span class="spinner-border spinner-border-sm"></span>';
+    btn.disabled = true;
+
+    fetch('/settings/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.innerHTML = '<span>Change Password</span> <span>🔒</span>';
+        btn.disabled = false;
+        
+        if (data.success) {
+            // Show the modal
+            var myModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+            myModal.show();
+        } else {
+            alert("Failed to send OTP: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.innerHTML = '<span>Change Password</span> <span>🔒</span>';
+        btn.disabled = false;
+        alert("A network error occurred. Check your connection.");
+    });
+}
+</script>
+{% endblock %}

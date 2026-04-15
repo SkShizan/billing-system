@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .admin-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
+    .form-control-admin { border: 1px solid var(--color-sand); border-radius: 8px; background-color: #F8F5F1; transition: all 0.2s; }
+    .form-control-admin:focus { background-color: #ffffff; border-color: var(--color-sage); box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15); outline: none; }
+    .form-label { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+    <div class="d-flex align-items-center">
+        <span class="fs-3 me-2 text-sage">⚙️</span>
+        <h2 class="admin-header mb-0">System Configuration</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} rounded-3 shadow-sm border-0" style="background-color: var(--color-cream); color: var(--color-sage);">
+                  {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-glass border-0">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <h5 class="mb-0 text-sage fw-bold">Email (SMTP) Settings</h5>
+                <p class="text-muted small mt-1">Required for sending OTPs and Password Resets to Tenants.</p>
+            </div>
+            <div class="card-body p-4">
+                <form action="/developer/settings" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">SMTP Server Host</label>
+                        <input type="text" name="server" class="form-control form-control-admin" placeholder="smtp.gmail.com" value="{{ smtp.server if smtp else '' }}" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Port</label>
+                            <input type="number" name="port" class="form-control form-control-admin" value="{{ smtp.port if smtp else '587' }}" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Sender Email Address</label>
+                            <input type="email" name="sender_email" class="form-control form-control-admin" placeholder="noreply@yoursaas.com" value="{{ smtp.sender_email if smtp else '' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">SMTP Username</label>
+                        <input type="text" name="username" class="form-control form-control-admin" value="{{ smtp.username if smtp else '' }}" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">SMTP Password / App Password</label>
+                        <input type="password" name="password" class="form-control form-control-admin" value="{{ smtp.password if smtp else '' }}" required>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="use_tls" id="useTls" {% if not smtp or smtp.use_tls %}checked{% endif %}>
+                        <label class="form-check-label text-dark fw-medium" for="useTls">
+                            Use TLS Security
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-sage w-100 py-2 fw-bold">Save Email Configuration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

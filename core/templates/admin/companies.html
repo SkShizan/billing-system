@@ -1,17 +1,67 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-    .admin-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
-    .form-control-admin { border: 1px solid var(--color-sand); border-radius: 8px; background-color: #F8F5F1; transition: all 0.2s; }
-    .form-control-admin:focus { background-color: #ffffff; border-color: var(--color-sage); box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15); outline: none; }
-    .form-label { font-size: 0.85rem; font-weight: 600; color: var(--color-taupe); text-transform: uppercase; }
-    .table-admin th { background-color: #F8F5F1; color: var(--color-sage); font-size: 0.85rem; text-transform: uppercase; padding: 1rem; border-bottom: 2px solid var(--color-sand); }
-    .table-admin td { padding: 1rem; border-bottom: 1px solid rgba(212, 194, 173, 0.3); vertical-align: middle; }
-    
+    .admin-header {
+        color: var(--color-sage);
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .form-control-admin {
+        border: 1px solid var(--color-sand);
+        border-radius: 8px;
+        background-color: #F8F5F1;
+        transition: all 0.2s;
+    }
+
+    .form-control-admin:focus {
+        background-color: #ffffff;
+        border-color: var(--color-sage);
+        box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15);
+        outline: none;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-taupe);
+        text-transform: uppercase;
+    }
+
+    .table-admin th {
+        background-color: #F8F5F1;
+        color: var(--color-sage);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        padding: 1rem;
+        border-bottom: 2px solid var(--color-sand);
+    }
+
+    .table-admin td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(212, 194, 173, 0.3);
+        vertical-align: middle;
+    }
+
     /* Search Bar Specific */
-    .search-wrapper-admin { display: flex; gap: 8px; }
-    .search-input-custom { border: 1px solid var(--color-sand); border-radius: 8px; padding: 8px 16px; background-color: #F8F5F1; font-weight: 500; }
-    .search-input-custom:focus { background-color: #fff; border-color: var(--color-sage); outline: none; }
+    .search-wrapper-admin {
+        display: flex;
+        gap: 8px;
+    }
+
+    .search-input-custom {
+        border: 1px solid var(--color-sand);
+        border-radius: 8px;
+        padding: 8px 16px;
+        background-color: #F8F5F1;
+        font-weight: 500;
+    }
+
+    .search-input-custom:focus {
+        background-color: #fff;
+        border-color: var(--color-sage);
+        outline: none;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
@@ -25,14 +75,15 @@
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} rounded-3 shadow-sm border-0" style="background-color: var(--color-cream); color: var(--color-sage);">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} rounded-3 shadow-sm border-0"
+    style="background-color: var(--color-cream); color: var(--color-sage);">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
 {% endwith %}
 
 <div class="row">
@@ -50,24 +101,28 @@
 
                     <div class="mb-3">
                         <label class="form-label">Complete Address</label>
-                        <textarea name="address" class="form-control form-control-admin" rows="2" placeholder="HQ Address..." required></textarea>
+                        <textarea name="address" class="form-control form-control-admin" rows="2"
+                            placeholder="HQ Address..." required></textarea>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">GSTIN</label>
-                            <input type="text" name="gstin" class="form-control form-control-admin" placeholder="19ABC..." required>
+                            <input type="text" name="gstin" class="form-control form-control-admin"
+                                placeholder="19ABC..." required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control form-control-admin" placeholder="@company.com" required>
+                            <input type="email" name="email" class="form-control form-control-admin"
+                                placeholder="@company.com" required>
                         </div>
                     </div>
-                    
+
                     <div class="row border-top pt-3 mt-2" style="border-color: var(--color-sand) !important;">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Login ID</label>
-                            <input type="text" name="login_id" class="form-control form-control-admin" placeholder="Username" required>
+                            <input type="text" name="login_id" class="form-control form-control-admin"
+                                placeholder="Username" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Password</label>
@@ -87,18 +142,21 @@
 
     <div class="col-md-8">
         <div class="card card-glass border-0">
-            <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div
+                class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0 text-sage fw-bold">Active Workspaces</h5>
-                
+
                 <form method="GET" action="/developer/companies" class="search-wrapper-admin w-100 w-lg-50">
-                    <input type="text" name="search" class="form-control search-input-custom flex-grow-1" placeholder="Search name, ID, email..." value="{{ search_query or '' }}">
+                    <input type="text" name="search" class="form-control search-input-custom flex-grow-1"
+                        placeholder="Search name, ID, email..." value="{{ search_query or '' }}">
                     <button type="submit" class="btn btn-sage px-3 fw-bold rounded-3">Search</button>
                     {% if search_query %}
-                        <a href="/developer/companies" class="btn btn-outline-taupe px-3 rounded-3 d-flex align-items-center">Clear</a>
+                    <a href="/developer/companies"
+                        class="btn btn-outline-taupe px-3 rounded-3 d-flex align-items-center">Clear</a>
                     {% endif %}
                 </form>
             </div>
-            
+
             <div class="card-body p-0">
                 <table class="table table-admin mb-0">
                     <thead>
@@ -106,7 +164,8 @@
                             <th class="ps-4">Identity</th>
                             <th>Company Name</th>
                             <th>Login ID</th>
-                            <th class="pe-4 text-end">Onboarded</th>
+                            <th>Onboarded</th>
+                            <th class="pe-4 text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -114,23 +173,101 @@
                         <tr>
                             <td class="ps-4">
                                 {% if c.logo_path %}
-                                    <img src="{{ url_for('static', filename=c.logo_path) }}" height="40" class="rounded-3 border shadow-sm" style="border-color: var(--color-sand) !important; object-fit: cover; width: 40px;">
+                                <img src="{{ url_for('static', filename=c.logo_path) }}" height="40"
+                                    class="rounded-3 border shadow-sm"
+                                    style="border-color: var(--color-sand) !important; object-fit: cover; width: 40px;">
                                 {% else %}
-                                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted fw-bold" style="width: 40px; height: 40px; font-size: 10px; border: 1px solid var(--color-sand);">IMG</div>
+                                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted fw-bold"
+                                    style="width: 40px; height: 40px; font-size: 10px; border: 1px solid var(--color-sand);">
+                                    IMG</div>
                                 {% endif %}
                             </td>
                             <td>
                                 <strong class="text-dark">{{ c.name }}</strong><br>
                                 <small class="text-muted fw-medium">{{ c.email }}</small>
                             </td>
-                            <td><code style="color: var(--color-taupe); background: var(--color-cream); padding: 4px 8px; border-radius: 6px;">{{ c.login_id }}</code></td>
-                            <td class="pe-4 text-end text-muted fw-medium">{{ c.created_at.strftime('%b %d, %Y') }}</td>
+                            <td><code
+                                    style="color: var(--color-taupe); background: var(--color-cream); padding: 4px 8px; border-radius: 6px;">{{ c.login_id }}</code>
+                            </td>
+                            <td class="text-muted fw-medium">{{ c.created_at.strftime('%b %d, %Y') }}</td>
+
+                            <td class="pe-4 text-end">
+                                <button class="btn btn-sm btn-outline-taupe px-3 rounded-3 fw-bold"
+                                    data-bs-toggle="modal" data-bs-target="#editCompanyModal{{ c.id }}">Edit</button>
+
+                                <form action="/developer/companies/delete/{{ c.id }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('CRITICAL WARNING: Deleting {{ c.name }} will wipe ALL their invoices, products, and customer data permanently. Are you sure?');">
+                                    <button type="submit"
+                                        class="btn btn-sm text-danger bg-transparent border-0 fw-bold ms-1">Del</button>
+                                </form>
+                            </td>
                         </tr>
+
+                        <div class="modal fade" id="editCompanyModal{{ c.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                                    <form action="/developer/companies/edit/{{ c.id }}" method="POST"
+                                        enctype="multipart/form-data">
+                                        <div class="modal-header border-0 pb-0 pt-4 px-4">
+                                            <h5 class="modal-title fw-bold text-sage">Edit Tenant Workspace</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-start px-4 pt-4">
+
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Business Name</label>
+                                                    <input type="text" name="name"
+                                                        class="form-control form-control-admin" value="{{ c.name }}"
+                                                        required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Email Address</label>
+                                                    <input type="email" name="email"
+                                                        class="form-control form-control-admin" value="{{ c.email }}"
+                                                        required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Complete Address</label>
+                                                    <textarea name="address" class="form-control form-control-admin"
+                                                        rows="2" required>{{ c.address }}</textarea>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">GSTIN</label>
+                                                    <input type="text" name="gstin"
+                                                        class="form-control form-control-admin" value="{{ c.gstin }}"
+                                                        required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Force Password Reset</label>
+                                                    <input type="password" name="password"
+                                                        class="form-control form-control-admin"
+                                                        placeholder="Leave blank to keep current">
+                                                </div>
+                                                <div class="col-12 mt-3">
+                                                    <label class="form-label">Override Company Logo</label>
+                                                    <input type="file" name="logo"
+                                                        class="form-control form-control-admin" accept="image/*">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer border-0 px-4 pb-4 mt-2">
+                                            <button type="button" class="btn btn-outline-taupe fw-bold rounded-3"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-sage fw-bold rounded-3 px-4">Save
+                                                Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         {% else %}
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
+                            <td colspan="5" class="text-center py-5 text-muted">
                                 <div class="fs-2 mb-2">🏢</div>
-                                {% if search_query %} No workspaces match your search. {% else %} No workspaces provisioned yet. {% endif %}
+                                {% if search_query %} No workspaces match your search. {% else %} No workspaces
+                                provisioned yet. {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -139,19 +276,24 @@
             </div>
 
             {% if pagination.pages > 1 %}
-            <div class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
+            <div
+                class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
                 <small class="text-muted fw-medium">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
                 <nav>
                     <ul class="pagination pagination-sm mb-0 gap-1">
                         {% if pagination.has_prev %}
                         <li class="page-item">
-                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3" href="{{ url_for('admin.manage_companies', page=pagination.prev_num, search=search_query) }}">← Prev</a>
+                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3"
+                                href="{{ url_for('admin.manage_companies', page=pagination.prev_num, search=search_query) }}">←
+                                Prev</a>
                         </li>
                         {% endif %}
-                        
+
                         {% if pagination.has_next %}
                         <li class="page-item">
-                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold" href="{{ url_for('admin.manage_companies', page=pagination.next_num, search=search_query) }}">Next →</a>
+                            <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold"
+                                href="{{ url_for('admin.manage_companies', page=pagination.next_num, search=search_query) }}">Next
+                                →</a>
                         </li>
                         {% endif %}
                     </ul>

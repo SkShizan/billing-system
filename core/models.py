@@ -1,5 +1,5 @@
 from .extensions import db
-from datetime import datetime
+from datetime import datetime,timedelta
 
 # --- NEW: THE TENANT (COMPANY) MODEL ---
 class Company(db.Model):
@@ -13,6 +13,8 @@ class Company(db.Model):
     gstin = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reset_otp = db.Column(db.String(6), nullable=True)
+    reset_otp_expiry = db.Column(db.DateTime, nullable=True)
 
     # Relationships to access a company's specific data easily
     products = db.relationship('Product', backref='company', lazy=True)
@@ -74,3 +76,12 @@ class HSNDictionary(db.Model):
     hsn_code = db.Column(db.String(20), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
     gst_rate = db.Column(db.Float, nullable=False)
+
+class SMTPSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    server = db.Column(db.String(150), nullable=False)
+    port = db.Column(db.Integer, nullable=False, default=587)
+    username = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    sender_email = db.Column(db.String(150), nullable=False)
+    use_tls = db.Column(db.Boolean, default=True)
