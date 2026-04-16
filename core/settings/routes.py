@@ -25,6 +25,12 @@ def index():
         company.email = request.form.get('email', company.email).strip()
         company.address = request.form.get('address', company.address).strip()
         company.gstin = request.form.get('gstin', company.gstin).strip()
+        
+        # 🎯 Custom Invoice Formatting
+        if request.form.get('state_code'):
+            company.state_code = request.form.get('state_code').strip().upper()
+        if request.form.get('short_code'):
+            company.short_code = request.form.get('short_code').strip().upper()
 
         # 2. Handle Logo Upload
         logo_file = request.files.get('logo')

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, flash
-from core.models import db, Customer, Product, Invoice, InvoiceItem
+from core.models import db, Customer, Product, Invoice, InvoiceItem, Company
 import uuid
 from sqlalchemy import or_
 from datetime import datetime
@@ -45,6 +45,9 @@ def generate_bill():
     company_id = session['company_id']
     data = request.json
     
+    # Fetch the company to get the invoice sequence formatting
+    company = Company.query.get(company_id)
+    
     # 1. Handle Customer
     customer = Customer.query.filter_by(phone_number=data['customer_phone'], company_id=company_id).first()
     if not customer:
@@ -56,21 +59,29 @@ def generate_bill():
         db.session.add(customer)
         db.session.flush() 
     
-    # 2. Create Invoice with Unguessable ID
+    # 2. 🎯 Generate Custom Invoice Number (e.g., INV-WB-0001SBD)
+    company.invoice_seq += 1
+    st_code = (company.state_code or "ST").upper()
+    sh_code = (company.short_code or "CMP").upper()
+    inv_num = f"INV-{st_code}-{company.invoice_seq:04d}{sh_code}"
+    
+    # 3. Create Invoice
     invoice = Invoice(
         company_id=company_id,
-        invoice_number=f"INV-{str(uuid.uuid4())[:8].upper()}",
+        invoice_number=inv_num,
         customer_id=customer.id,
         subtotal=data['subtotal'],
         discount_type=data['discount_type'],
         discount_value=data['discount_value'],
         total_tax=data['total_tax'],
-        grand_total=data['grand_total']
+        grand_total=data['grand_total'],
+        is_paid=data.get('is_paid', False),     # 🎯 Coming from frontend checkbox
+        split_gst=data.get('split_gst', True)   # 🎯 Coming from frontend checkbox
     )
     db.session.add(invoice)
     db.session.flush()
 
-    # 3. Add Invoice Items
+    # 4. Add Invoice Items
     for item in data['items']:
         product = Product.query.filter_by(id=item['product_id'], company_id=company_id).first()
         if product:
@@ -79,12 +90,30 @@ def generate_bill():
                 product_id=product.id,
                 quantity=item['quantity'],
                 price_at_purchase=product.current_price,
-                gst_percentage_at_purchase=product.gst_percentage
+                gst_percentage_at_purchase=product.gst_percentage,
+                # 🎯 Capture the manual CGST/SGST split values from the frontend
+                cgst_percentage=item.get('cgst', 0.0),
+                sgst_percentage=item.get('sgst', 0.0)
             )
             db.session.add(inv_item)
     
     db.session.commit()
     return jsonify({"success": True, "invoice_id": invoice.id})
+
+# 🎯 NEW: Toggle Payment API for History Page
+@billing_bp.route('/api/toggle_payment/<int:invoice_id>', methods=['POST'])
+def toggle_payment(invoice_id):
+    """API: Marks an invoice as paid/unpaid instantly."""
+    if not is_logged_in(): return jsonify({"success": False})
+    
+    # Security: Ensure they can only update their own invoices
+    invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first()
+    if invoice:
+        data = request.json
+        invoice.is_paid = data.get('is_paid', False)
+        db.session.commit()
+        return jsonify({"success": True})
+    return jsonify({"success": False}), 404
 
 # --- INTERNAL VIEW (Requires Login) ---
 @billing_bp.route('/invoice/<int:invoice_id>')
@@ -99,12 +128,9 @@ def view_invoice(invoice_id):
 @billing_bp.route('/public/invoice/<invoice_number>')
 def public_view_invoice(invoice_number):
     """Secure, read-only link for customers (No login required)."""
-    # Look up by the random string (INV-XXXXX) so it cannot be guessed
     invoice = Invoice.query.filter_by(invoice_number=invoice_number).first_or_404()
-    
     # Pass is_public=True so the template knows to hide internal buttons
     return render_template('billing/invoice_template.html', invoice=invoice, is_public=True)
-
 
 @billing_bp.route('/history')
 def history():
@@ -119,7 +145,6 @@ def history():
     search_query = request.args.get('search', '').strip()
 
     # Base query: Invoices for THIS company, joining Customer so we can search by name/phone
-    # Assuming you have models imported like: from core.models import Invoice, Customer
     query = Invoice.query.join(Customer).filter(Invoice.company_id == company_id)
 
     # Apply search filter if present
@@ -141,7 +166,6 @@ def history():
         search_query=search_query
     )
 
-
 @billing_bp.route('/dashboard')
 def dashboard():
     # 1. Security Check
@@ -156,24 +180,26 @@ def dashboard():
     # Midnight on the 1st of the current month
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # 3. Fast Database Aggregations using func (O(1) memory transfer)
+    # 3. Fast Database Aggregations
     
-    # Today's Metrics (Revenue & Count)
+    # 🎯 Today's Metrics (Filtered by is_paid == True)
     today_stats = db.session.query(
         func.sum(Invoice.grand_total).label('revenue'),
         func.count(Invoice.id).label('count')
     ).filter(
         Invoice.company_id == company_id,
-        Invoice.created_at >= start_of_today
+        Invoice.created_at >= start_of_today,
+        Invoice.is_paid == True
     ).first()
 
-    # Monthly Metrics (Revenue & Tax)
+    # 🎯 Monthly Metrics (Filtered by is_paid == True)
     month_stats = db.session.query(
         func.sum(Invoice.grand_total).label('revenue'),
         func.sum(Invoice.total_tax).label('tax')
     ).filter(
         Invoice.company_id == company_id,
-        Invoice.created_at >= start_of_month
+        Invoice.created_at >= start_of_month,
+        Invoice.is_paid == True
     ).first()
 
     # Inventory Metric (Active Products)
@@ -184,7 +210,7 @@ def dashboard():
         .order_by(Invoice.created_at.desc()) \
         .limit(5).all()
 
-    # 5. Handle None values and calculate Gross Sales (THE FIX IS HERE)
+    # 5. Handle None values and calculate Gross Sales
     month_rev = month_stats.revenue or 0.0
     month_tx = month_stats.tax or 0.0
     month_gross = month_rev - month_tx
@@ -208,7 +234,6 @@ def dashboard():
         current_date=current_date_str
     )
 
-
 @billing_bp.route('/customers')
 def customers_directory():
     # SECURITY: Check if logged in
@@ -221,7 +246,6 @@ def customers_directory():
     search_query = request.args.get('search', '').strip()
 
     # Create an aggregated query grouping by Customer
-    # We select the Customer object, count their invoices, sum their total spend, and get their latest visit
     query = db.session.query(
         Customer,
         func.count(Invoice.id).label('total_visits'),

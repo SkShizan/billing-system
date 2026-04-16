@@ -136,6 +136,14 @@
                             <label class="form-label-premium">GSTIN</label>
                             <input type="text" name="gstin" class="form-control form-control-premium" value="{{ company.gstin }}" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label-premium">State Code (For Invoice)</label>
+                            <input type="text" name="state_code" class="form-control form-control-premium" value="{{ company.state_code }}" placeholder="e.g. WB" maxlength="5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-premium">Short Code (For Invoice)</label>
+                            <input type="text" name="short_code" class="form-control form-control-premium" value="{{ company.short_code }}" placeholder="e.g. SBD" maxlength="10">
+                        </div>
                     </div>
 
                     <div class="divider"></div>

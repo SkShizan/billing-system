@@ -85,6 +85,9 @@
             <div class="invoice-title">Tax Invoice</div>
             <div><strong>Invoice No:</strong> {{ invoice.invoice_number }}</div>
             <div><strong>Date:</strong> {{ invoice.created_at.strftime('%d %b %Y') }}</div>
+            {% if invoice.is_paid %}
+                <div style="margin-top: 10px; color: #27ae60; font-weight: bold; font-size: 16px;">PAID</div>
+            {% endif %}
         </div>
     </div>
 
@@ -114,7 +117,16 @@
                 <td>{{ item.product.hsn_code or 'N/A' }}</td>
                 <td class="right">{{ item.quantity }}</td>
                 <td class="right">{{ "%.2f"|format(item.price_at_purchase) }}</td>
-                <td class="right">{{ item.gst_percentage_at_purchase }}%</td>
+                
+                <td class="right" style="white-space: nowrap;">
+                    {% if invoice.split_gst %}
+                        <div style="font-size: 12px; color: #555;"><strong>CGST:</strong> {{ item.cgst_percentage }}%</div>
+                        <div style="font-size: 12px; color: #555;"><strong>SGST:</strong> {{ item.sgst_percentage }}%</div>
+                    {% else %}
+                        <div><strong>IGST:</strong> {{ item.gst_percentage_at_purchase }}%</div>
+                    {% endif %}
+                </td>
+
                 <td class="right">
                     {{ "%.2f"|format(item.price_at_purchase * item.quantity) }}
                 </td>
@@ -177,6 +189,7 @@
     }
 
     // 2. Logic for Sending the Public Link via WhatsApp
+    // 2. Logic for Sending the Public Link via WhatsApp
     {% if not is_public %}
     function sendWhatsApp() {
         let phone = "{{ invoice.customer.phone_number }}";
@@ -194,11 +207,14 @@
         // Generate the exact public link
         const invoiceLink = `${window.location.origin}/billing/public/invoice/${invNo}`;
 
-        // Construct the message with the clickable link
-        const message = `Hello ${name},%0A%0AThis is an automated message from *${companyName}*.%0AYour invoice *${invNo}* for the total amount of *₹${amount}* has been generated.%0A%0A📄 *Click the secure link below to view and download your PDF Invoice:*%0A${invoiceLink}%0A%0AThank you for your business!`;
+        // Create the raw message with standard line breaks
+        const rawMessage = `Hello ${name},\n\nThis is an automated message from *${companyName}*.\nYour invoice *${invNo}* for the total amount of *₹${amount}* has been generated.\n\n📄 *Click the secure link below to view and download your PDF Invoice:*\n${invoiceLink}\n\nThank you for your business!`;
+
+        // Safely encode the entire message so WhatsApp parses it perfectly
+        const encodedMessage = encodeURIComponent(rawMessage);
 
         // Redirect to WhatsApp API
-        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${message}`;
+        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
         window.open(url, '_blank');
     }
     {% endif %}

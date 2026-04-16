@@ -78,6 +78,7 @@
                         <th>Date & Time</th>
                         <th>Customer Details</th>
                         <th>Total Amount</th>
+                        <th>Payment Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -85,7 +86,7 @@
                     {% for inv in pagination.items %}
                     <tr>
                         <td>
-                            <span class="inv-badge">#{{ inv.invoice_number }}</span>
+                            <span class="inv-badge">{{ inv.invoice_number }}</span>
                         </td>
                         <td>
                             <div class="fw-bold text-dark">{{ inv.created_at.strftime('%d %b %Y') }}</div>
@@ -98,13 +99,27 @@
                         <td class="amount-text">
                             ₹{{ "%.2f"|format(inv.grand_total) }}
                         </td>
+                        
+                        <td>
+                            <div class="form-check form-switch m-0 d-flex align-items-center">
+                                <input class="form-check-input payment-toggle shadow-sm mt-0" type="checkbox" data-id="{{ inv.id }}" {% if inv.is_paid %}checked{% endif %} style="cursor: pointer;">
+                                <label class="form-check-label ms-2 small fw-bold">
+                                    {% if inv.is_paid %}
+                                        <span class="text-sage">Paid</span>
+                                    {% else %}
+                                        <span class="text-terracotta">Pending</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </td>
+
                         <td class="text-end">
-                            <a href="/billing/invoice/{{ inv.invoice_number }}" class="btn btn-sm btn-outline-taupe px-3 fw-bold rounded-3">View PDF</a>
+                            <a href="/billing/invoice/{{ inv.id }}" class="btn btn-sm btn-outline-taupe px-3 fw-bold rounded-3">View PDF</a>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <div class="fs-1 mb-3">📭</div>
                             {% if search_query %}
                                 <h5 class="fw-bold text-taupe">No Invoices Found</h5>
@@ -142,4 +157,36 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+document.querySelectorAll('.payment-toggle').forEach(toggle => {
+    toggle.addEventListener('change', function() {
+        const invoiceId = this.getAttribute('data-id');
+        const isPaid = this.checked;
+        const label = this.nextElementSibling;
+        
+        // Optimistically update the UI text
+        label.innerHTML = isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
+
+        // Send update to the backend silently
+        fetch(`/billing/api/toggle_payment/${invoiceId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ is_paid: isPaid })
+        }).then(res => {
+            if(!res.ok) {
+                // If it fails, revert the switch
+                this.checked = !isPaid;
+                label.innerHTML = !isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
+                alert("Failed to update status. Please try again.");
+            }
+        }).catch(err => {
+            console.error("Error updating payment status:", err);
+            this.checked = !isPaid;
+            label.innerHTML = !isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
+            alert("Network error. Please try again.");
+        });
+    });
+});
+</script>
 {% endblock %}

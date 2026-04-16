@@ -18,6 +18,27 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-md-6 mb-3 mb-md-0">
+        <div class="form-check form-switch p-3 rounded-4 shadow-sm d-flex justify-content-between align-items-center h-100" style="background-color: #ffffff; border: 1px solid var(--color-sand);">
+            <div>
+                <label class="form-check-label fw-bold mb-0" style="color: var(--text-dark);">Enable Local Tax Split</label>
+                <small class="d-block text-muted">Manually adjust CGST/SGST percentages per item.</small>
+            </div>
+            <input class="form-check-input fs-4 m-0" type="checkbox" id="splitGstMasterToggle" onchange="toggleGstView()">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check form-switch p-3 rounded-4 shadow-sm d-flex justify-content-between align-items-center h-100" style="background-color: #ffffff; border: 1px solid var(--color-sand);">
+            <div>
+                <label class="form-check-label fw-bold mb-0 text-sage">Mark as Paid Now</label>
+                <small class="d-block text-muted">Records revenue instantly in Dashboard.</small>
+            </div>
+            <input class="form-check-input fs-4 m-0" type="checkbox" id="isPaidToggle" checked>
+        </div>
+    </div>
+</div>
+
 <div class="card card-glass border-0 mb-4">
     <div class="card-header bg-white border-0 pt-4 pb-0 px-4 rounded-top-4">
         <h6 class="pos-label mb-0">Customer Details</h6>
@@ -37,7 +58,7 @@
 <div class="card card-glass border-0 mb-4">
     <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center rounded-top-4">
         <h6 class="pos-label mb-0">Cart Items</h6>
-        <button class="btn btn-terracotta btn-sm px-3" onclick="addRow()">+ Add Product Row</button>
+        <button class="btn btn-terracotta btn-sm px-3 fw-bold" onclick="addRow()">+ Add Product Row</button>
     </div>
     <div class="card-body p-0">
         <div style="overflow: visible;">
@@ -47,8 +68,8 @@
                         <th width="35%" class="ps-4">Product Search</th>
                         <th width="10%">HSN</th>
                         <th width="15%">Price (₹)</th>
-                        <th width="10%">GST (%)</th>
-                        <th width="10%">Qty</th>
+                        <th width="12%">GST (%)</th>
+                        <th width="8%">Qty</th>
                         <th width="15%">Total (₹)</th>
                         <th width="5%" class="pe-4 text-center">Action</th>
                     </tr>
@@ -104,7 +125,6 @@
         const tr = document.createElement('tr');
         tr.id = `row-${rowId}`;
         
-        // Updated HTML inside JS to match the custom styling
         tr.innerHTML = `
             <td class="ps-4">
                 <div class="position-relative">
@@ -115,12 +135,54 @@
             </td>
             <td><input type="text" class="form-control bg-light text-muted border-0 hsn-input" readonly></td>
             <td><input type="number" class="form-control bg-light text-muted border-0 price-input" readonly></td>
-            <td><input type="text" class="form-control bg-light text-muted border-0 gst-input" readonly></td>
+            
+            <td>
+                <input type="hidden" class="raw-gst" value="0">
+                <div class="gst-container">
+                    <input type="text" class="form-control bg-light text-muted border-0 gst-input" readonly>
+                </div>
+            </td>
+
             <td><input type="number" class="form-control qty-input border-0" style="background-color: #ffffff; box-shadow: inset 0 0 0 1px var(--color-sand);" value="1" min="1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()"></td>
             <td><input type="text" class="form-control bg-light text-dark fw-bold border-0 row-total text-end" readonly value="0.00"></td>
             <td class="pe-4 text-center"><button class="btn btn-sm text-danger fw-bold border-0 bg-transparent" tabindex="-1" onclick="removeRow(${rowId})">✕</button></td>
         `;
         tbody.appendChild(tr);
+        // Ensure new rows respect the current master toggle state
+        updateRowGstView(tr);
+    }
+
+    // 🎯 NEW: Functions to handle dynamic tax switching
+    function updateRowGstView(row) {
+        const isSplit = document.getElementById('splitGstMasterToggle').checked;
+        const container = row.querySelector('.gst-container');
+        const rawGst = parseFloat(row.querySelector('.raw-gst').value) || 0;
+        const hasProduct = row.querySelector('.product-id').value !== '';
+        
+        if (isSplit && hasProduct) {
+            let half = (rawGst / 2).toFixed(1);
+            container.innerHTML = `
+                <div class="d-flex flex-column gap-1">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light fw-bold" style="font-size: 0.65rem; width: 45px; padding: 0.2rem;">CGST</span>
+                        <input type="number" class="form-control cgst-input px-1" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light fw-bold" style="font-size: 0.65rem; width: 45px; padding: 0.2rem;">SGST</span>
+                        <input type="number" class="form-control sgst-input px-1" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `<input type="text" class="form-control bg-light text-muted border-0 gst-input" readonly value="${hasProduct ? rawGst + '%' : ''}">`;
+        }
+    }
+
+    function toggleGstView() {
+        document.querySelectorAll('#cartBody tr').forEach(row => {
+            updateRowGstView(row);
+        });
+        calculateGrandTotal();
     }
 
     function searchProduct(rowId, inputElem) {
@@ -134,7 +196,8 @@
             row.querySelector('.product-id').value = '';
             row.querySelector('.hsn-input').value = '';
             row.querySelector('.price-input').value = '';
-            row.querySelector('.gst-input').value = '';
+            row.querySelector('.raw-gst').value = '0';
+            updateRowGstView(row);
             calculateGrandTotal();
             return;
         }
@@ -148,7 +211,6 @@
                 if (products.length > 0) {
                     products.forEach(p => {
                         const li = document.createElement('li');
-                        // Custom styled list items
                         li.className = 'list-group-item list-group-item-action p-3 border-bottom';
                         li.style.cursor = 'pointer';
                         li.style.borderColor = 'var(--color-sand)';
@@ -159,7 +221,8 @@
                             row.querySelector('.product-id').value = p.id;
                             row.querySelector('.hsn-input').value = p.hsn || '';
                             row.querySelector('.price-input').value = p.price;
-                            row.querySelector('.gst-input').value = p.gst + '%';
+                            row.querySelector('.raw-gst').value = p.gst; // Save raw GST
+                            updateRowGstView(row); // 🎯 Dynamically Render Tax Inputs
                             suggestionBox.style.display = 'none';
                             calculateGrandTotal();
                         };
@@ -192,13 +255,24 @@
 
     function calculateGrandTotal() {
         let subtotal = 0; let totalTax = 0;
+        const isSplit = document.getElementById('splitGstMasterToggle').checked;
+
         document.querySelectorAll('#cartBody tr').forEach(row => {
             const price = parseFloat(row.querySelector('.price-input').value) || 0;
             const qty = parseInt(row.querySelector('.qty-input').value) || 0;
-            const gst = parseFloat(row.querySelector('.gst-input').value.replace('%', '')) || 0;
+            
+            // 🎯 Read tax either from the inputs or the raw value
+            let totalGstPercent = 0;
+            if (isSplit && row.querySelector('.cgst-input')) {
+                const cgst = parseFloat(row.querySelector('.cgst-input').value) || 0;
+                const sgst = parseFloat(row.querySelector('.sgst-input').value) || 0;
+                totalGstPercent = cgst + sgst;
+            } else {
+                totalGstPercent = parseFloat(row.querySelector('.raw-gst').value) || 0;
+            }
 
             const rowBaseTotal = price * qty;
-            const rowTax = rowBaseTotal * (gst / 100);
+            const rowTax = rowBaseTotal * (totalGstPercent / 100);
             row.querySelector('.row-total').value = (rowBaseTotal + rowTax).toFixed(2);
             subtotal += rowBaseTotal; totalTax += rowTax;
         });
@@ -220,10 +294,29 @@
     async function generateBill() {
         const btn = document.getElementById('generateBtn');
         const items = [];
+        const isSplit = document.getElementById('splitGstMasterToggle').checked;
+        const isPaid = document.getElementById('isPaidToggle').checked;
+
         document.querySelectorAll('#cartBody tr').forEach(row => {
             const productId = row.querySelector('.product-id').value;
             const qty = row.querySelector('.qty-input').value;
-            if(productId && qty > 0) items.push({ product_id: parseInt(productId), quantity: parseInt(qty) });
+            
+            if(productId && qty > 0) {
+                let cgstVal = 0, sgstVal = 0;
+                
+                // 🎯 Extract specific CGST/SGST if enabled
+                if (isSplit && row.querySelector('.cgst-input')) {
+                    cgstVal = parseFloat(row.querySelector('.cgst-input').value) || 0;
+                    sgstVal = parseFloat(row.querySelector('.sgst-input').value) || 0;
+                }
+
+                items.push({ 
+                    product_id: parseInt(productId), 
+                    quantity: parseInt(qty),
+                    cgst: cgstVal,
+                    sgst: sgstVal
+                });
+            }
         });
 
         if(items.length === 0) return alert("Please select valid products.");
@@ -234,12 +327,15 @@
         btn.disabled = true; btn.innerText = "Generating...";
 
         const payload = {
-            customer_name: custName, customer_phone: custPhone,
+            customer_name: custName, 
+            customer_phone: custPhone,
             subtotal: parseFloat(document.getElementById('subtotal').innerText),
             total_tax: parseFloat(document.getElementById('totalTax').innerText),
             discount_type: document.getElementById('discountType').value,
             discount_value: parseFloat(document.getElementById('discountValue').value) || 0,
             grand_total: parseFloat(document.getElementById('grandTotal').innerText),
+            split_gst: isSplit, // Include flags
+            is_paid: isPaid,
             items: items
         };
 

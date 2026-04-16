@@ -15,6 +15,10 @@ class Company(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reset_otp = db.Column(db.String(6), nullable=True)
     reset_otp_expiry = db.Column(db.DateTime, nullable=True)
+    
+    state_code = db.Column(db.String(5), default='WB')
+    short_code = db.Column(db.String(10), default='CMP')
+    invoice_seq = db.Column(db.Integer, default=0) # Tracks the 1234 number
 
     # Relationships to access a company's specific data easily
     products = db.relationship('Product', backref='company', lazy=True)
@@ -53,6 +57,9 @@ class Invoice(db.Model):
     discount_value = db.Column(db.Float, default=0.0)
     total_tax = db.Column(db.Float, nullable=False)
     grand_total = db.Column(db.Float, nullable=False)
+    # 🎯 Payment and Split States
+    is_paid = db.Column(db.Boolean, default=False)
+    split_gst = db.Column(db.Boolean, default=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     items = db.relationship('InvoiceItem', backref='invoice', lazy=True)
@@ -66,6 +73,9 @@ class InvoiceItem(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     price_at_purchase = db.Column(db.Float, nullable=False) 
     gst_percentage_at_purchase = db.Column(db.Float, nullable=False)
+    # 🎯 Custom CGST/SGST overrides
+    cgst_percentage = db.Column(db.Float, default=0.0)
+    sgst_percentage = db.Column(db.Float, default=0.0)
     
     product = db.relationship('Product')
 
