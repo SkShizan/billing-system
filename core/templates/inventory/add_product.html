@@ -61,8 +61,25 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Base Price (₹)</label>
-                        <input type="number" name="price" class="form-control" placeholder="0.00" step="0.01" required>
+                        <label class="form-label">MRP / Base Price (₹)</label>
+                        <input type="number" name="base_price" id="basePrice" class="form-control" placeholder="0.00" step="0.01" required onkeyup="calcMainFinalPrice()">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Discount</label>
+                            <div class="input-group">
+                                <select name="discount_type" id="discountType" class="form-select bg-light border-0" style="max-width: 65px;" onchange="calcMainFinalPrice()">
+                                    <option value="flat">₹</option>
+                                    <option value="percentage">%</option>
+                                </select>
+                                <input type="number" name="discount_value" id="discountValue" class="form-control bg-light border-0" placeholder="0" step="0.01" value="0" onkeyup="calcMainFinalPrice()">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-terracotta">Final Price</label>
+                            <input type="number" name="price" id="finalPrice" class="form-control fw-bold text-dark border-0" style="background-color: #EFDFCC;" required readonly>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -97,7 +114,7 @@
                             <tr>
                                 <th class="ps-4">Item</th>
                                 <th>Details</th>
-                                <th>Price</th>
+                                <th>Price & Offer</th>
                                 <th>GST</th>
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
@@ -116,7 +133,16 @@
                                     <strong class="text-dark">{{ p.name }}</strong><br>
                                     <small class="text-taupe fw-medium">HSN: {{ p.hsn_code }}</small>
                                 </td>
-                                <td class="fw-bold">₹{{ "%.2f"|format(p.current_price) }}</td>
+                                
+                                <td>
+                                    {% if p.discount_value > 0 %}
+                                        <strike class="text-muted small">₹{{ "%.2f"|format(p.base_price or p.current_price) }}</strike><br>
+                                        <strong class="text-terracotta">₹{{ "%.2f"|format(p.current_price) }}</strong>
+                                    {% else %}
+                                        <strong class="text-dark">₹{{ "%.2f"|format(p.current_price) }}</strong>
+                                    {% endif %}
+                                </td>
+
                                 <td><span class="badge" style="background-color: var(--color-cream); color: var(--color-sage); border: 1px solid var(--color-sand);">{{ p.gst_percentage }}%</span></td>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-sm btn-outline-taupe px-3" data-bs-toggle="modal" data-bs-target="#editProductModal{{ p.id }}">Edit</button>
@@ -149,10 +175,29 @@
                                                         <input type="number" step="0.01" name="gst_percentage" class="form-control" value="{{ p.gst_percentage }}" required>
                                                     </div>
                                                 </div>
+
                                                 <div class="mb-3">
-                                                    <label class="form-label">Base Price (₹)</label>
-                                                    <input type="number" step="0.01" name="price" class="form-control" value="{{ p.current_price }}" required>
+                                                    <label class="form-label">MRP / Base Price (₹)</label>
+                                                    <input type="number" step="0.01" name="base_price" class="form-control edit-calc edit-base" value="{{ p.base_price or p.current_price }}" required>
                                                 </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Discount</label>
+                                                        <div class="input-group">
+                                                            <select name="discount_type" class="form-select bg-light border-0 edit-calc edit-type" style="max-width: 65px;">
+                                                                <option value="flat" {% if p.discount_type == 'flat' %}selected{% endif %}>₹</option>
+                                                                <option value="percentage" {% if p.discount_type == 'percentage' %}selected{% endif %}>%</option>
+                                                            </select>
+                                                            <input type="number" name="discount_value" class="form-control bg-light border-0 edit-calc edit-val" step="0.01" value="{{ p.discount_value or 0 }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label text-terracotta">Final Price</label>
+                                                        <input type="number" name="price" class="form-control fw-bold text-dark border-0 edit-final" value="{{ p.current_price }}" style="background-color: #EFDFCC;" required readonly>
+                                                    </div>
+                                                </div>
+
                                                 <div class="mb-3">
                                                     <label class="form-label">Update Image</label>
                                                     <input type="file" name="image" class="form-control" accept="image/*">
@@ -205,6 +250,41 @@
 </div>
 
 <script>
+    // 🎯 NEW: Calculates final price automatically for the "Add New Product" form
+    function calcMainFinalPrice() {
+        let base = parseFloat(document.getElementById('basePrice').value) || 0;
+        let type = document.getElementById('discountType').value;
+        let val = parseFloat(document.getElementById('discountValue').value) || 0;
+        let final = base;
+
+        if (type === 'flat') {
+            final -= val;
+        } else if (type === 'percentage') {
+            final -= (base * (val / 100));
+        }
+
+        document.getElementById('finalPrice').value = final > 0 ? final.toFixed(2) : '0.00';
+    }
+
+    // 🎯 NEW: Listens to ALL "Edit Modal" forms dynamically and calculates final price
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('edit-calc')) {
+            let form = e.target.closest('form');
+            let base = parseFloat(form.querySelector('.edit-base').value) || 0;
+            let type = form.querySelector('.edit-type').value;
+            let val = parseFloat(form.querySelector('.edit-val').value) || 0;
+            let final = base;
+
+            if (type === 'flat') {
+                final -= val;
+            } else if (type === 'percentage') {
+                final -= (base * (val / 100));
+            }
+
+            form.querySelector('.edit-final').value = final > 0 ? final.toFixed(2) : '0.00';
+        }
+    });
+
     let debounceTimer;
 
     function searchHSN() {

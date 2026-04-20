@@ -109,7 +109,7 @@
             <div class="invoice-title">Tax Invoice</div>
             <div><strong>Invoice No:</strong> {{ invoice.invoice_number }}</div>
             <div><strong>Date:</strong> {{ invoice.created_at.strftime('%d %b %Y') }}</div>
-            </div>
+        </div>
     </div>
 
     <div class="billing-info">
@@ -126,6 +126,8 @@
                 <th>Description</th>
                 <th>HSN/SAC</th>
                 <th class="right">Qty</th>
+                <th class="right">MRP (₹)</th>
+                <th class="right">Discount</th>
                 <th class="right">Rate (₹)</th>
                 <th class="right">GST %</th>
                 <th class="right">Amount (₹)</th>
@@ -137,6 +139,23 @@
                 <td>{{ item.product.name }}</td>
                 <td>{{ item.product.hsn_code or 'N/A' }}</td>
                 <td class="right">{{ item.quantity }}</td>
+                
+                <td class="right">
+                    {% if item.discount_value > 0 %}
+                        <strike style="color: #95a5a6;">{{ "%.2f"|format(item.base_price_at_purchase) }}</strike>
+                    {% else %}
+                        {{ "%.2f"|format(item.base_price_at_purchase or item.price_at_purchase) }}
+                    {% endif %}
+                </td>
+                
+                <td class="right discount-text">
+                    {% if item.discount_value > 0 %}
+                        - {% if item.discount_type == 'flat' %}₹{{ "%.2f"|format(item.discount_value) }}{% else %}{{ item.discount_value }}%{% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
                 <td class="right">{{ "%.2f"|format(item.price_at_purchase) }}</td>
                 
                 <td class="right" style="white-space: nowrap;">
@@ -170,7 +189,7 @@
                 </tr>
                 {% if invoice.discount_value > 0 %}
                 <tr>
-                    <td class="label discount-text">Discount:</td>
+                    <td class="label discount-text">Cart Discount:</td>
                     <td class="discount-text">
                         - {% if invoice.discount_type == 'flat' %}₹{{ "%.2f"|format(invoice.discount_value) }}{% else %}{{ invoice.discount_value }}%{% endif %}
                     </td>
@@ -184,7 +203,18 @@
                     <td class="label grand-total">Grand Total:</td>
                     <td class="grand-total">₹{{ "%.2f"|format(invoice.grand_total) }}</td>
                 </tr>
+                <tr>
+                    <td class="label">Payment Status:</td>
+                    <td>
+                        {% if invoice.is_paid %}
+                            Paid via {{ invoice.payment_method }}
+                        {% else %}
+                            Pending
+                        {% endif %}
+                    </td>
+                </tr>
             </table>
+            
         </div>
     </div>
 

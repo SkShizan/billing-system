@@ -2,76 +2,154 @@
 
 {% block content %}
 <style>
-    .pos-title { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
-    .pos-label { font-weight: 600; color: var(--color-taupe); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-control { border: 1px solid var(--color-sand); border-radius: 8px; transition: all 0.2s; }
-    .form-control:focus { border-color: var(--color-sage); box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15); }
-    .table-pos th { background-color: #F8F5F1; color: var(--color-sage); border-bottom: 2px solid var(--color-sand); font-size: 0.85rem; text-transform: uppercase; padding: 1rem; }
-    .table-pos td { padding: 0.75rem 1rem; vertical-align: middle; border-bottom: 1px solid rgba(212, 194, 173, 0.3); }
-    .checkout-pane { background-color: rgba(239, 223, 204, 0.3); border-radius: 16px; border: 1px solid var(--color-sand); }
+    /* Premium POS Styling */
+    .pos-title { color: var(--color-sage); font-weight: 800; letter-spacing: -0.5px; }
+    .pos-label { font-weight: 700; color: var(--color-taupe); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; }
+    
+    /* Smooth Form Controls */
+    .form-control, .form-select { border: 1px solid #e0e0e0; border-radius: 8px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .form-control:focus, .form-select:focus { border-color: var(--color-sage); box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15); outline: none; }
+    
+    /* Modern Floating Labels for Customer Details */
+    .form-floating > label { color: #888; font-weight: 500; font-size: 0.9rem; }
+    .form-floating > .form-control:focus ~ label, .form-floating > .form-control:not(:placeholder-shown) ~ label { color: var(--color-sage); font-weight: 600; }
+
+    /* Seamless Table Inputs (Looks like text until focused) */
+    .table-input { border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 6px 10px; width: 100%; transition: all 0.2s; font-size: 0.9rem; }
+    .table-input:focus { border-color: var(--color-sage); background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .table-input[readonly] { color: #6c757d; font-weight: 500; cursor: default; }
+    
+    /* Table Styling */
+    .table-pos { margin-bottom: 0; }
+    .table-pos th { background-color: #Fdfbf9; color: var(--color-sage); border-bottom: 2px solid #eaeaea; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
+    .table-pos td { padding: 0.75rem; vertical-align: middle; border-bottom: 1px solid #f4f4f4; }
+    .table-pos tbody tr:hover { background-color: #faf9f7; }
+
+    /* Custom Switch & Toggles */
+    .settings-card { background-color: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
+    .settings-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.04); transform: translateY(-1px); }
+
+    /* Elevated Checkout Pane */
+    .checkout-pane { background: linear-gradient(145deg, #ffffff, #faf9f7); border-radius: 16px; border: 1px solid #eaeaea; box-shadow: 0 10px 30px rgba(0,0,0,0.04); overflow: hidden; }
+    .checkout-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .grand-total-box { background-color: rgba(102, 121, 107, 0.08); padding: 20px; border-radius: 12px; margin-top: 15px; border: 1px solid rgba(102, 121, 107, 0.15); }
+    
+    /* Action Button */
+    .btn-generate { background-color: var(--color-sage); color: white; border: none; border-radius: 10px; padding: 14px; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; }
+    .btn-generate:hover { background-color: #556659; box-shadow: 0 6px 20px rgba(102, 121, 107, 0.3); transform: translateY(-2px); }
+    /* 🎯 PRO CART STYLING */
+    .cart-card { border-radius: 16px; border: 1px solid #eaeaea; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; }
+    .cart-header { background: #ffffff; border-bottom: 1px solid #f4f4f4; padding: 1.25rem 1.5rem; }
+    
+    /* 🎯 ADD ROW BUTTON */
+    .btn-add-row { background-color: #fdfaf7; color: var(--color-terracotta); border: 1px dashed var(--color-terracotta); transition: all 0.2s ease; }
+    .btn-add-row:hover { background-color: var(--color-terracotta); color: #fff; box-shadow: 0 4px 10px rgba(215, 161, 132, 0.3); }
+    
+    /* 🎯 RESPONSIVE TABLE FIX */
+    .pos-table-wrapper { 
+        overflow-x: auto; 
+        -webkit-overflow-scrolling: touch;
+        min-height: 250px; /* Gives room for the search dropdown to open without getting cut off */
+    }
+    
+    /* Force a minimum width so inputs never squish and become unusable */
+    .table-pos { min-width: 1050px; margin-bottom: 0; }
+    .table-pos th { white-space: nowrap; background-color: #fcfbf9; }
+
+    /* 🎯 Hides the default dropdown arrow */
+    .no-arrow {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: none !important; /* Removes Bootstrap's custom arrow */
+        padding-right: 8px !important; /* Adjusts padding since the arrow is gone */
+        text-align: center; /* Centers the text (like ₹ or %) nicely */
+    }
 </style>
 
-<div class="row mb-4 mt-2">
+<div class="row mb-4 mt-2 align-items-center">
     <div class="col d-flex align-items-center">
-        <span class="fs-3 me-2 text-terracotta">🛒</span>
-        <h2 class="pos-title mb-0">Point of Sale</h2>
+        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm border" style="width: 48px; height: 48px; border-color: #eaeaea !important;">
+            <span class="fs-4">🛒</span>
+        </div>
+        <h2 class="pos-title mb-0 ms-3">Point of Sale</h2>
     </div>
 </div>
 
+<div class="card border-0 mb-4 shadow-sm" style="border-radius: 14px;">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 rounded-top-4">
+        <h6 class="pos-label mb-0">Customer Details</h6>
+    </div>
+    <div class="card-body px-4 pb-4 pt-2">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="text" id="custName" class="form-control bg-light" placeholder="Full Name" required>
+                    <label for="custName">Customer Full Name</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="tel" id="custPhone" class="form-control bg-light" placeholder="Phone Number (+91)" required>
+                    <label for="custPhone">Phone Number (+91)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row mb-4">
     <div class="col-md-6 mb-3 mb-md-0">
-        <div class="form-check form-switch p-3 rounded-4 shadow-sm d-flex justify-content-between align-items-center h-100" style="background-color: #ffffff; border: 1px solid var(--color-sand);">
+        <div class="form-check form-switch p-3 settings-card d-flex justify-content-between align-items-center h-100">
             <div>
-                <label class="form-check-label fw-bold mb-0" style="color: var(--text-dark);">Enable Local Tax Split</label>
-                <small class="d-block text-muted">Manually adjust CGST/SGST percentages per item.</small>
+                <label class="form-check-label fw-bold mb-1 text-dark fs-6">Local Tax Split (CGST/SGST)</label>
+                <small class="d-block text-muted" style="font-size: 0.8rem;">Manually adjust inner tax percentages per item.</small>
             </div>
-            <input class="form-check-input fs-4 m-0" type="checkbox" id="splitGstMasterToggle" onchange="toggleGstView()">
+            <input class="form-check-input fs-3 m-0 shadow-sm" type="checkbox" id="splitGstMasterToggle" onchange="toggleGstView()">
         </div>
     </div>
     <div class="col-md-6">
-        <div class="form-check form-switch p-3 rounded-4 shadow-sm d-flex justify-content-between align-items-center h-100" style="background-color: #ffffff; border: 1px solid var(--color-sand);">
+        <div class="form-check form-switch p-3 settings-card d-flex justify-content-between align-items-center h-100">
             <div>
-                <label class="form-check-label fw-bold mb-0 text-sage">Mark as Paid Now</label>
-                <small class="d-block text-muted">Records revenue instantly in Dashboard.</small>
+                <label class="form-check-label fw-bold mb-1 text-sage fs-6">Instant Payment Logging</label>
+                <small class="d-block text-muted" style="font-size: 0.8rem;">Record how the customer paid immediately.</small>
             </div>
-            <input class="form-check-input fs-4 m-0" type="checkbox" id="isPaidToggle" checked>
-        </div>
-    </div>
-</div>
-
-<div class="card card-glass border-0 mb-4">
-    <div class="card-header bg-white border-0 pt-4 pb-0 px-4 rounded-top-4">
-        <h6 class="pos-label mb-0">Customer Details</h6>
-    </div>
-    <div class="card-body px-4 pb-4">
-        <div class="row">
-            <div class="col-md-6 mb-2">
-                <input type="text" id="custName" class="form-control py-2" placeholder="Full Name" required>
-            </div>
-            <div class="col-md-6 mb-2">
-                <input type="text" id="custPhone" class="form-control py-2" placeholder="Phone Number (+91)" required>
+            <div class="d-flex align-items-center gap-3">
+                <select id="paymentMethod" class="form-select form-select-sm border-1 bg-light text-sage fw-bold shadow-sm no-arrow" style="width: 100px; cursor: pointer;">
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input class="form-check-input fs-3 m-0 shadow-sm" type="checkbox" id="isPaidToggle">
             </div>
         </div>
     </div>
 </div>
 
-<div class="card card-glass border-0 mb-4">
-    <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center rounded-top-4">
-        <h6 class="pos-label mb-0">Cart Items</h6>
-        <button class="btn btn-terracotta btn-sm px-3 fw-bold" onclick="addRow()">+ Add Product Row</button>
+<div class="card border-0 mb-4 cart-card">
+    <div class="card-header cart-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fs-5">📦</span>
+            <h6 class="pos-label mb-0 fs-6 text-sage fw-bold">Cart Items</h6>
+        </div>
+        <button class="btn btn-sm px-4 fw-bold rounded-pill btn-add-row d-flex align-items-center gap-2" onclick="addRow()">
+            <span class="fs-5" style="line-height: 0.5;">+</span> Add Product
+        </button>
     </div>
+    
     <div class="card-body p-0">
-        <div style="overflow: visible;">
-            <table class="table table-pos mb-0" id="cartTable">
+        <div class="pos-table-wrapper">
+            <table class="table table-pos w-100 align-middle" id="cartTable">
                 <thead>
                     <tr>
-                        <th width="35%" class="ps-4">Product Search</th>
-                        <th width="10%">HSN</th>
-                        <th width="15%">Price (₹)</th>
-                        <th width="12%">GST (%)</th>
-                        <th width="8%">Qty</th>
-                        <th width="15%">Total (₹)</th>
-                        <th width="5%" class="pe-4 text-center">Action</th>
+                        <th style="width: 25%; min-width: 260px;" class="ps-4">Product Search</th>
+                        <th style="width: 10%; min-width: 100px;">HSN</th>
+                        <th style="width: 12%; min-width: 120px;">MRP (₹)</th>
+                        <th style="width: 16%; min-width: 160px;">Discount</th>
+                        <th style="width: 12%; min-width: 130px;">GST (%)</th>
+                        <th style="width: 10%; min-width: 100px;" class="text-center">Qty</th>
+                        <th style="width: 12%; min-width: 130px;" class="text-end">Total (₹)</th>
+                        <th style="width: 3%; min-width: 50px;" class="pe-4 text-center"></th>
                     </tr>
                 </thead>
                 <tbody id="cartBody"></tbody>
@@ -81,35 +159,40 @@
 </div>
 
 <div class="row mb-5 justify-content-end">
-    <div class="col-md-5">
-        <div class="checkout-pane p-4 shadow-sm">
-            <table class="table table-borderless text-end mb-0">
-                <tr>
-                    <td class="h6 text-muted fw-medium">Subtotal:</td>
-                    <td class="h6 fw-bold text-dark">₹<span id="subtotal">0.00</span></td>
-                </tr>
-                <tr>
-                    <td class="align-middle text-muted fw-medium">Discount:</td>
-                    <td>
-                        <div class="input-group input-group-sm justify-content-end">
-                            <select id="discountType" class="form-select text-end" style="max-width: 80px; border-color: var(--color-sand);" onchange="calculateGrandTotal()">
-                                <option value="flat">₹</option>
-                                <option value="percentage">%</option>
-                            </select>
-                            <input type="number" id="discountValue" class="form-control text-end" style="max-width: 90px; border-color: var(--color-sand);" value="0" onkeyup="calculateGrandTotal()">
-                        </div>
-                    </td>
-                </tr>
-                <tr class="border-bottom" style="border-color: var(--color-sand) !important;">
-                    <td class="h6 text-muted fw-medium pb-3">Total Tax (GST):</td>
-                    <td class="h6 fw-bold text-dark pb-3">₹<span id="totalTax">0.00</span></td>
-                </tr>
-                <tr>
-                    <td class="h3 text-sage fw-bold pt-3">Grand Total:</td>
-                    <td class="h3 text-sage fw-bold pt-3">₹<span id="grandTotal">0.00</span></td>
-                </tr>
-            </table>
-            <button class="btn btn-sage btn-lg w-100 mt-4 shadow-sm fw-bold" id="generateBtn" onclick="generateBill()">Generate Invoice</button>
+    <div class="col-lg-5 col-md-7">
+        <div class="checkout-pane p-4">
+            <h6 class="pos-label mb-3 border-bottom pb-2">Billing Summary</h6>
+            
+            <div class="checkout-row">
+                <span class="text-muted fw-semibold">Subtotal:</span>
+                <span class="fw-bold text-dark fs-5">₹<span id="subtotal">0.00</span></span>
+            </div>
+            
+            <div class="checkout-row">
+                <span class="text-muted fw-semibold">Global Cart Discount:</span>
+                <div class="d-flex align-items-center gap-1" style="max-width: 140px;">
+                    <select id="discountType" class="form-select form-select-sm bg-white shadow-sm no-arrow" onchange="calculateGrandTotal()">
+                        <option value="flat">₹</option>
+                        <option value="percentage">%</option>
+                    </select>
+                    <input type="number" id="discountValue" class="form-control form-control-sm text-end bg-white shadow-sm" value="0" onkeyup="calculateGrandTotal()">
+                </div>
+            </div>
+            
+            <div class="checkout-row border-bottom pb-3 mb-2">
+                <span class="text-muted fw-semibold">Total Tax (GST):</span>
+                <span class="fw-bold text-dark fs-5">₹<span id="totalTax">0.00</span></span>
+            </div>
+            
+            <div class="grand-total-box d-flex justify-content-between align-items-center">
+                <span class="text-sage fw-bold fs-5 text-uppercase tracking-wide">Grand Total</span>
+                <span class="text-sage fw-bolder fs-3">₹<span id="grandTotal">0.00</span></span>
+            </div>
+            
+            <button class="btn btn-generate w-100 mt-4 d-flex justify-content-center align-items-center gap-2" id="generateBtn" onclick="generateBill()">
+                <span>Generate Invoice</span>
+                <span class="fs-5">→</span>
+            </button>
         </div>
     </div>
 </div>
@@ -128,31 +211,47 @@
         tr.innerHTML = `
             <td class="ps-4">
                 <div class="position-relative">
-                    <input type="text" class="form-control" style="border-color: var(--color-terracotta);" placeholder="Type product name..." onkeyup="searchProduct(${rowId}, this)" autocomplete="off">
+                    <input type="text" class="table-input fw-bold text-dark" placeholder="Search product..." onkeyup="searchProduct(${rowId}, this)" autocomplete="off" style="border-bottom: 1px dashed #ccc; border-radius: 0;">
                     <input type="hidden" class="product-id">
-                    <ul class="list-group position-absolute w-100 shadow-lg border-0" id="productSuggestions-${rowId}" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; border-radius: 8px;"></ul>
+                    <ul class="list-group position-absolute w-100 shadow border-0" id="productSuggestions-${rowId}" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; border-radius: 8px; top: 100%; left: 0;"></ul>
                 </div>
             </td>
-            <td><input type="text" class="form-control bg-light text-muted border-0 hsn-input" readonly></td>
-            <td><input type="number" class="form-control bg-light text-muted border-0 price-input" readonly></td>
+            <td><input type="text" class="table-input text-muted text-center" readonly tabindex="-1"></td>
+            <td><input type="number" class="table-input base-price-input text-center fw-semibold text-dark" readonly tabindex="-1"></td>
+            
+            <td>
+                <div class="d-flex align-items-center bg-white border rounded-2 px-1 shadow-sm" style="border-color: #eaeaea !important;">
+                    <select class="form-select border-0 discount-type-input bg-transparent py-1 px-2 no-arrow" style="width: auto; box-shadow: none; font-weight: 600; color: var(--color-terracotta);" onchange="calculateGrandTotal()">
+                        <option value="flat">₹</option>
+                        <option value="percentage">%</option>
+                    </select>
+                    <input type="number" class="form-control border-0 discount-value-input text-end py-1 px-2 bg-transparent" value="0" step="0.1" style="box-shadow: none; font-weight: 600;" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                </div>
+            </td>
             
             <td>
                 <input type="hidden" class="raw-gst" value="0">
-                <div class="gst-container">
-                    <input type="text" class="form-control bg-light text-muted border-0 gst-input" readonly>
-                </div>
+                <div class="gst-container"></div>
             </td>
 
-            <td><input type="number" class="form-control qty-input border-0" style="background-color: #ffffff; box-shadow: inset 0 0 0 1px var(--color-sand);" value="1" min="1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()"></td>
-            <td><input type="text" class="form-control bg-light text-dark fw-bold border-0 row-total text-end" readonly value="0.00"></td>
-            <td class="pe-4 text-center"><button class="btn btn-sm text-danger fw-bold border-0 bg-transparent" tabindex="-1" onclick="removeRow(${rowId})">✕</button></td>
+            <td class="text-center">
+                <input type="number" class="table-input qty-input text-center fw-bold bg-white border shadow-sm" value="1" min="1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()" style="width: 60px; border-color: #eaeaea !important;">
+            </td>
+            
+            <td class="text-end pe-3">
+                <div class="d-flex flex-column align-items-end justify-content-center h-100">
+                    <input type="text" class="table-input text-dark fw-bold text-end p-0 m-0 fs-5" readonly tabindex="-1" value="0.00" style="background: transparent !important;">
+                    <small class="text-muted" style="font-size: 0.65rem;">Rate: ₹<span class="final-rate-display">0.00</span></small>
+                </div>
+            </td>
+            <td class="pe-4 text-center">
+                <button class="btn btn-sm border-0 text-danger" tabindex="-1" onclick="removeRow(${rowId})" style="background: #FFF0F0; border-radius: 6px; padding: 4px 8px; transition: 0.2s;" onmouseover="this.style.background='#FFE0E0'" onmouseout="this.style.background='#FFF0F0'">✕</button>
+            </td>
         `;
         tbody.appendChild(tr);
-        // Ensure new rows respect the current master toggle state
         updateRowGstView(tr);
     }
 
-    // 🎯 NEW: Functions to handle dynamic tax switching
     function updateRowGstView(row) {
         const isSplit = document.getElementById('splitGstMasterToggle').checked;
         const container = row.querySelector('.gst-container');
@@ -163,18 +262,18 @@
             let half = (rawGst / 2).toFixed(1);
             container.innerHTML = `
                 <div class="d-flex flex-column gap-1">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light fw-bold" style="font-size: 0.65rem; width: 45px; padding: 0.2rem;">CGST</span>
-                        <input type="number" class="form-control cgst-input px-1" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                    <div class="d-flex align-items-center bg-light rounded-1 px-1">
+                        <span class="text-muted fw-bold" style="font-size: 0.6rem; width: 30px;">CGST</span>
+                        <input type="number" class="table-input cgst-input px-1 py-0 text-end" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
                     </div>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light fw-bold" style="font-size: 0.65rem; width: 45px; padding: 0.2rem;">SGST</span>
-                        <input type="number" class="form-control sgst-input px-1" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                    <div class="d-flex align-items-center bg-light rounded-1 px-1">
+                        <span class="text-muted fw-bold" style="font-size: 0.6rem; width: 30px;">SGST</span>
+                        <input type="number" class="table-input sgst-input px-1 py-0 text-end" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
                     </div>
                 </div>
             `;
         } else {
-            container.innerHTML = `<input type="text" class="form-control bg-light text-muted border-0 gst-input" readonly value="${hasProduct ? rawGst + '%' : ''}">`;
+            container.innerHTML = `<input type="text" class="table-input text-muted text-center" readonly tabindex="-1" value="${hasProduct ? rawGst + '%' : ''}">`;
         }
     }
 
@@ -190,12 +289,16 @@
         const query = inputElem.value.trim();
         const suggestionBox = document.getElementById(`productSuggestions-${rowId}`);
         const row = document.getElementById(`row-${rowId}`);
+        
+        // Grab specific inputs dynamically based on position since we removed distinct classes from some elements to make them look cleaner
+        const hsnInput = row.children[1].querySelector('input');
+        const totalInput = row.children[6].querySelector('input');
 
         if (query.length < 2) {
             suggestionBox.style.display = 'none';
             row.querySelector('.product-id').value = '';
-            row.querySelector('.hsn-input').value = '';
-            row.querySelector('.price-input').value = '';
+            hsnInput.value = '';
+            row.querySelector('.base-price-input').value = '';
             row.querySelector('.raw-gst').value = '0';
             updateRowGstView(row);
             calculateGrandTotal();
@@ -213,16 +316,20 @@
                         const li = document.createElement('li');
                         li.className = 'list-group-item list-group-item-action p-3 border-bottom';
                         li.style.cursor = 'pointer';
-                        li.style.borderColor = 'var(--color-sand)';
-                        li.innerHTML = `<strong style="color: var(--color-sage);">${p.name}</strong> <br><small class="text-muted fw-medium">Price: ₹${p.price} • HSN: ${p.hsn || 'N/A'} • GST: ${p.gst}%</small>`;
+                        li.innerHTML = `<strong class="text-sage">${p.name}</strong> <br><small class="text-muted">MRP: ₹${p.base_price || p.price} &bull; HSN: ${p.hsn || 'N/A'} &bull; GST: ${p.gst}%</small>`;
 
                         li.onclick = () => {
                             inputElem.value = p.name;
+                            inputElem.style.borderBottom = "1px solid transparent"; // Remove dash line once selected
+                            
                             row.querySelector('.product-id').value = p.id;
-                            row.querySelector('.hsn-input').value = p.hsn || '';
-                            row.querySelector('.price-input').value = p.price;
-                            row.querySelector('.raw-gst').value = p.gst; // Save raw GST
-                            updateRowGstView(row); // 🎯 Dynamically Render Tax Inputs
+                            hsnInput.value = p.hsn || '';
+                            row.querySelector('.base-price-input').value = p.base_price || p.price;
+                            row.querySelector('.discount-type-input').value = p.discount_type || 'flat';
+                            row.querySelector('.discount-value-input').value = p.discount_value || 0;
+                            row.querySelector('.raw-gst').value = p.gst; 
+                            
+                            updateRowGstView(row); 
                             suggestionBox.style.display = 'none';
                             calculateGrandTotal();
                         };
@@ -230,7 +337,7 @@
                     });
                     suggestionBox.style.display = 'block';
                 } else {
-                    suggestionBox.innerHTML = '<li class="list-group-item text-muted small p-3">No products found. Add in inventory first.</li>';
+                    suggestionBox.innerHTML = '<li class="list-group-item text-muted small p-3 text-center">No products found. Add in inventory.</li>';
                     suggestionBox.style.display = 'block';
                 }
             } catch (error) { console.error("Error:", error); }
@@ -258,36 +365,50 @@
         const isSplit = document.getElementById('splitGstMasterToggle').checked;
 
         document.querySelectorAll('#cartBody tr').forEach(row => {
-            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const basePrice = parseFloat(row.querySelector('.base-price-input').value) || 0;
+            const discountType = row.querySelector('.discount-type-input').value;
+            const discountValue = parseFloat(row.querySelector('.discount-value-input').value) || 0;
             const qty = parseInt(row.querySelector('.qty-input').value) || 0;
             
-            // 🎯 Read tax either from the inputs or the raw value
+            let finalRate = basePrice;
+            if (discountType === 'flat') {
+                finalRate = basePrice - discountValue;
+            } else if (discountType === 'percentage') {
+                finalRate = basePrice - (basePrice * (discountValue / 100));
+            }
+            if (finalRate < 0) finalRate = 0; 
+            
+            if(row.querySelector('.final-rate-display')) {
+                row.querySelector('.final-rate-display').innerText = finalRate.toFixed(2);
+            }
+
             let totalGstPercent = 0;
             if (isSplit && row.querySelector('.cgst-input')) {
-                const cgst = parseFloat(row.querySelector('.cgst-input').value) || 0;
-                const sgst = parseFloat(row.querySelector('.sgst-input').value) || 0;
-                totalGstPercent = cgst + sgst;
+                totalGstPercent = (parseFloat(row.querySelector('.cgst-input').value) || 0) + (parseFloat(row.querySelector('.sgst-input').value) || 0);
             } else {
                 totalGstPercent = parseFloat(row.querySelector('.raw-gst').value) || 0;
             }
 
-            const rowBaseTotal = price * qty;
+            const rowBaseTotal = finalRate * qty;
             const rowTax = rowBaseTotal * (totalGstPercent / 100);
-            row.querySelector('.row-total').value = (rowBaseTotal + rowTax).toFixed(2);
-            subtotal += rowBaseTotal; totalTax += rowTax;
+            
+            // Total Input is the 7th cell (index 6)
+            row.children[6].querySelector('input').value = (rowBaseTotal + rowTax).toFixed(2);
+            subtotal += rowBaseTotal; 
+            totalTax += rowTax;
         });
 
         document.getElementById('subtotal').innerText = subtotal.toFixed(2);
         document.getElementById('totalTax').innerText = totalTax.toFixed(2);
 
-        const discountType = document.getElementById('discountType').value;
-        const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
-        let discountAmount = 0;
+        const globalDiscountType = document.getElementById('discountType').value;
+        const globalDiscountValue = parseFloat(document.getElementById('discountValue').value) || 0;
+        let globalDiscountAmount = 0;
 
-        if (discountType === 'flat') discountAmount = discountValue;
-        else discountAmount = subtotal * (discountValue / 100);
+        if (globalDiscountType === 'flat') globalDiscountAmount = globalDiscountValue;
+        else globalDiscountAmount = subtotal * (globalDiscountValue / 100);
 
-        const grandTotal = (subtotal - discountAmount) + totalTax;
+        const grandTotal = (subtotal - globalDiscountAmount) + totalTax;
         document.getElementById('grandTotal').innerText = grandTotal > 0 ? grandTotal.toFixed(2) : "0.00";
     }
 
@@ -296,6 +417,7 @@
         const items = [];
         const isSplit = document.getElementById('splitGstMasterToggle').checked;
         const isPaid = document.getElementById('isPaidToggle').checked;
+        const paymentMethod = document.getElementById('paymentMethod').value;
 
         document.querySelectorAll('#cartBody tr').forEach(row => {
             const productId = row.querySelector('.product-id').value;
@@ -304,7 +426,6 @@
             if(productId && qty > 0) {
                 let cgstVal = 0, sgstVal = 0;
                 
-                // 🎯 Extract specific CGST/SGST if enabled
                 if (isSplit && row.querySelector('.cgst-input')) {
                     cgstVal = parseFloat(row.querySelector('.cgst-input').value) || 0;
                     sgstVal = parseFloat(row.querySelector('.sgst-input').value) || 0;
@@ -313,6 +434,10 @@
                 items.push({ 
                     product_id: parseInt(productId), 
                     quantity: parseInt(qty),
+                    base_price: parseFloat(row.querySelector('.base-price-input').value) || 0,
+                    discount_type: row.querySelector('.discount-type-input').value,
+                    discount_value: parseFloat(row.querySelector('.discount-value-input').value) || 0,
+                    final_price: parseFloat(row.querySelector('.final-rate-display').innerText) || 0,
                     cgst: cgstVal,
                     sgst: sgstVal
                 });
@@ -324,7 +449,8 @@
         const custPhone = document.getElementById('custPhone').value.trim();
         if(!custName || !custPhone) return alert("Customer Name and Phone required.");
 
-        btn.disabled = true; btn.innerText = "Generating...";
+        btn.disabled = true; 
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
 
         const payload = {
             customer_name: custName, 
@@ -334,8 +460,9 @@
             discount_type: document.getElementById('discountType').value,
             discount_value: parseFloat(document.getElementById('discountValue').value) || 0,
             grand_total: parseFloat(document.getElementById('grandTotal').innerText),
-            split_gst: isSplit, // Include flags
+            split_gst: isSplit,
             is_paid: isPaid,
+            payment_method: paymentMethod,
             items: items
         };
 
@@ -345,9 +472,9 @@
             });
             const result = await response.json();
             if(result.success) window.location.href = `/billing/invoice/${result.invoice_id}`;
-            else { alert("Failed."); btn.disabled = false; btn.innerText = "Generate Invoice"; }
+            else { alert("Failed."); btn.disabled = false; btn.innerHTML = '<span>Generate Invoice</span><span class="fs-5">→</span>'; }
         } catch (error) {
-            console.error(error); alert("Network error."); btn.disabled = false; btn.innerText = "Generate Invoice";
+            console.error(error); alert("Network error."); btn.disabled = false; btn.innerHTML = '<span>Generate Invoice</span><span class="fs-5">→</span>';
         }
     }
 </script>

@@ -34,7 +34,16 @@ def get_products():
     else:
         return jsonify([])
     
-    results = [{"id": p.id, "name": p.name, "hsn": p.hsn_code, "price": p.current_price, "gst": p.gst_percentage} for p in products]
+    results = [{
+        "id": p.id, 
+        "name": p.name, 
+        "hsn": p.hsn_code, 
+        "price": p.current_price, # Final selling price
+        "base_price": p.base_price or p.current_price, # MRP
+        "discount_type": p.discount_type or 'flat',
+        "discount_value": p.discount_value or 0.0,
+        "gst": p.gst_percentage
+    } for p in products]
     return jsonify(results)
 
 @billing_bp.route('/api/generate_bill', methods=['POST'])
@@ -76,6 +85,7 @@ def generate_bill():
         total_tax=data['total_tax'],
         grand_total=data['grand_total'],
         is_paid=data.get('is_paid', False),     # 🎯 Coming from frontend checkbox
+        payment_method=data.get('payment_method', 'Cash'),
         split_gst=data.get('split_gst', True)   # 🎯 Coming from frontend checkbox
     )
     db.session.add(invoice)
@@ -89,7 +99,13 @@ def generate_bill():
                 invoice_id=invoice.id,
                 product_id=product.id,
                 quantity=item['quantity'],
-                price_at_purchase=product.current_price,
+                
+                # 🎯 NEW: Product CRM & Override data captured from the frontend
+                price_at_purchase=item.get('final_price', product.current_price), 
+                base_price_at_purchase=item.get('base_price', product.current_price), 
+                discount_type=item.get('discount_type'),
+                discount_value=item.get('discount_value', 0.0),
+                
                 gst_percentage_at_purchase=product.gst_percentage,
                 # 🎯 Capture the manual CGST/SGST split values from the frontend
                 cgst_percentage=item.get('cgst', 0.0),
@@ -118,20 +134,21 @@ def generate_bill():
     return jsonify({"success": True, "invoice_id": invoice.id})
 
 # 🎯 NEW: Toggle Payment API for History Page
-@billing_bp.route('/api/toggle_payment/<int:invoice_id>', methods=['POST'])
-def toggle_payment(invoice_id):
-    """API: Marks an invoice as paid/unpaid instantly."""
+@billing_bp.route('/api/update_payment/<int:invoice_id>', methods=['POST'])
+def update_payment(invoice_id):
+    """API: Marks an invoice as paid/unpaid and updates payment method instantly."""
     if not is_logged_in(): return jsonify({"success": False})
     
-    # Security: Ensure they can only update their own invoices
     invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first()
     if invoice:
         data = request.json
-        invoice.is_paid = data.get('is_paid', False)
+        if 'is_paid' in data:
+            invoice.is_paid = data['is_paid']
+        if 'payment_method' in data:
+            invoice.payment_method = data['payment_method']
         db.session.commit()
         return jsonify({"success": True})
     return jsonify({"success": False}), 404
-
 # --- INTERNAL VIEW (Requires Login) ---
 @billing_bp.route('/invoice/<int:invoice_id>')
 def view_invoice(invoice_id):
@@ -183,72 +200,87 @@ def history():
         search_query=search_query
     )
 
+from datetime import datetime, timedelta
+from sqlalchemy import func
+
 @billing_bp.route('/dashboard')
 def dashboard():
-    # 1. Security Check
-    company_id = session.get('company_id')
-    if not company_id:
-        return redirect('/auth/login')
-
-    # 2. Time Calculations
-    now = datetime.now()
-    # Midnight today
-    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    # Midnight on the 1st of the current month
-    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    # 3. Fast Database Aggregations
+    if not is_logged_in():
+        return redirect(url_for('auth.login'))
+        
+    company_id = session['company_id']
+    today = datetime.utcnow().date()
+    start_of_month = today.replace(day=1)
     
-    # 🎯 Today's Metrics (Filtered by is_paid == True)
-    today_stats = db.session.query(
-        func.sum(Invoice.grand_total).label('revenue'),
-        func.count(Invoice.id).label('count')
-    ).filter(
+    # 1. Core Invoice Queries
+    today_invoices = Invoice.query.filter(
         Invoice.company_id == company_id,
-        Invoice.created_at >= start_of_today,
-        Invoice.is_paid == True
-    ).first()
-
-    # 🎯 Monthly Metrics (Filtered by is_paid == True)
-    month_stats = db.session.query(
-        func.sum(Invoice.grand_total).label('revenue'),
-        func.sum(Invoice.total_tax).label('tax')
-    ).filter(
+        func.date(Invoice.created_at) == today
+    ).all()
+    
+    month_invoices = Invoice.query.filter(
         Invoice.company_id == company_id,
-        Invoice.created_at >= start_of_month,
-        Invoice.is_paid == True
-    ).first()
+        func.date(Invoice.created_at) >= start_of_month
+    ).all()
 
-    # Inventory Metric (Active Products)
+    # 2. Revenue Calculations
+    today_revenue = sum(inv.grand_total for inv in today_invoices)
+    month_revenue = sum(inv.grand_total for inv in month_invoices)
+    month_gross_sales = sum(inv.subtotal for inv in month_invoices)
+    month_tax = sum(inv.total_tax for inv in month_invoices)
+    
+    # 3. 🎯 NEW: Advanced Metrics (Average Order Value)
+    aov = (month_revenue / len(month_invoices)) if month_invoices else 0.0
     total_products = Product.query.filter_by(company_id=company_id).count()
 
-    # 4. Fetch Recent Transactions (Limit to 5 for speed)
-    recent_invoices = Invoice.query.filter_by(company_id=company_id) \
-        .order_by(Invoice.created_at.desc()) \
-        .limit(5).all()
-
-    # 5. Handle None values and calculate Gross Sales
-    month_rev = month_stats.revenue or 0.0
-    month_tx = month_stats.tax or 0.0
-    month_gross = month_rev - month_tx
-
     metrics = {
-        'today_revenue': today_stats.revenue or 0.0,
-        'today_invoices': today_stats.count or 0,
-        'month_revenue': month_rev,
-        'month_tax': month_tx,
-        'month_gross_sales': month_gross,
+        'today_revenue': today_revenue,
+        'today_invoices': len(today_invoices),
+        'month_revenue': month_revenue,
+        'month_gross_sales': month_gross_sales,
+        'month_tax': month_tax,
+        'aov': aov, # 🎯 New Metric
         'total_products': total_products
     }
 
-    # 6. Format Date for the UI
-    current_date_str = now.strftime('%A, %b %d')
+    # 4. Recent Transactions
+    recent_invoices = Invoice.query.filter_by(company_id=company_id)\
+        .order_by(Invoice.created_at.desc())\
+        .limit(6).all()
+
+    # 5. 🎯 Main Chart: 7-Day Revenue Trend
+    chart_labels = []
+    chart_data = []
+    for i in range(6, -1, -1):
+        target_date = today - timedelta(days=i)
+        daily_revenue = db.session.query(func.sum(Invoice.grand_total)).filter(
+            Invoice.company_id == company_id,
+            func.date(Invoice.created_at) == target_date
+        ).scalar() or 0.0
+        
+        label = "Today" if i == 0 else target_date.strftime("%a")
+        chart_labels.append(label)
+        chart_data.append(float(daily_revenue))
+
+    # 6. 🎯 NEW Chart: Payment Method Breakdown (MTD)
+    payment_counts = db.session.query(Invoice.payment_method, func.count(Invoice.id))\
+        .filter(Invoice.company_id == company_id, func.date(Invoice.created_at) >= start_of_month)\
+        .group_by(Invoice.payment_method).all()
+    
+    pay_labels = [p[0] for p in payment_counts] if payment_counts else ['No Data']
+    pay_data = [p[1] for p in payment_counts] if payment_counts else [1]
+
+    current_date = today.strftime("%d %b %Y")
 
     return render_template(
         'dashboard/index.html', 
-        metrics=metrics,
-        recent_invoices=recent_invoices,
-        current_date=current_date_str
+        metrics=metrics, 
+        recent_invoices=recent_invoices, 
+        current_date=current_date,
+        chart_labels=chart_labels, 
+        chart_data=chart_data,
+        pay_labels=pay_labels, # 🎯 Pass to UI
+        pay_data=pay_data      # 🎯 Pass to UI
     )
 
 @billing_bp.route('/customers')

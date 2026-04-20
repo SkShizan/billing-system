@@ -101,15 +101,23 @@
                         </td>
                         
                         <td>
-                            <div class="form-check form-switch m-0 d-flex align-items-center">
-                                <input class="form-check-input payment-toggle shadow-sm mt-0" type="checkbox" data-id="{{ inv.id }}" {% if inv.is_paid %}checked{% endif %} style="cursor: pointer;">
-                                <label class="form-check-label ms-2 small fw-bold">
-                                    {% if inv.is_paid %}
-                                        <span class="text-sage">Paid</span>
-                                    {% else %}
-                                        <span class="text-terracotta">Pending</span>
-                                    {% endif %}
-                                </label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check form-switch m-0 d-flex align-items-center">
+                                    <input class="form-check-input payment-toggle shadow-sm mt-0" type="checkbox" data-id="{{ inv.id }}" {% if inv.is_paid %}checked{% endif %} style="cursor: pointer;">
+                                    <label class="form-check-label ms-2 small fw-bold">
+                                        {% if inv.is_paid %}
+                                            <span class="text-sage">Paid</span>
+                                        {% else %}
+                                            <span class="text-terracotta">Pending</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                <select class="form-select form-select-sm payment-method-select" data-id="{{ inv.id }}" style="font-size: 0.75rem; {% if not inv.is_paid %}display: none;{% endif %}">
+                                    <option value="Cash" {% if inv.payment_method == 'Cash' %}selected{% endif %}>Cash</option>
+                                    <option value="Card" {% if inv.payment_method == 'Card' %}selected{% endif %}>Card</option>
+                                    <option value="UPI" {% if inv.payment_method == 'UPI' %}selected{% endif %}>UPI</option>
+                                    <option value="Other" {% if inv.payment_method == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
                             </div>
                         </td>
 
@@ -159,33 +167,40 @@
 </div>
 
 <script>
+function updatePaymentStatus(id, isPaid, method) {
+    fetch(`/billing/api/update_payment/${id}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ is_paid: isPaid, payment_method: method })
+    }).then(res => {
+        if(!res.ok) alert("Failed to update status. Please try again.");
+    }).catch(err => {
+        console.error("Error updating payment status:", err);
+        alert("Network error. Please try again.");
+    });
+}
+
 document.querySelectorAll('.payment-toggle').forEach(toggle => {
     toggle.addEventListener('change', function() {
         const invoiceId = this.getAttribute('data-id');
         const isPaid = this.checked;
         const label = this.nextElementSibling;
+        const methodSelect = this.closest('td').querySelector('.payment-method-select');
         
-        // Optimistically update the UI text
+        // Optimistically update UI
         label.innerHTML = isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
+        methodSelect.style.display = isPaid ? 'block' : 'none';
 
-        // Send update to the backend silently
-        fetch(`/billing/api/toggle_payment/${invoiceId}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ is_paid: isPaid })
-        }).then(res => {
-            if(!res.ok) {
-                // If it fails, revert the switch
-                this.checked = !isPaid;
-                label.innerHTML = !isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
-                alert("Failed to update status. Please try again.");
-            }
-        }).catch(err => {
-            console.error("Error updating payment status:", err);
-            this.checked = !isPaid;
-            label.innerHTML = !isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
-            alert("Network error. Please try again.");
-        });
+        updatePaymentStatus(invoiceId, isPaid, methodSelect.value);
+    });
+});
+
+document.querySelectorAll('.payment-method-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const invoiceId = this.getAttribute('data-id');
+        const toggle = this.closest('td').querySelector('.payment-toggle');
+        
+        updatePaymentStatus(invoiceId, toggle.checked, this.value);
     });
 });
 </script>

@@ -41,6 +41,9 @@ class Product(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # ISOLATION
     name = db.Column(db.String(200), nullable=False)
     current_price = db.Column(db.Float, nullable=False)
+    base_price = db.Column(db.Float, nullable=True) # MRP
+    discount_type = db.Column(db.String(10), nullable=True) # 'flat' or 'percentage'
+    discount_value = db.Column(db.Float, default=0.0)
     hsn_code = db.Column(db.String(20), nullable=True)
     gst_percentage = db.Column(db.Float, default=0.0)
     image_path = db.Column(db.String(255), nullable=True) 
@@ -59,6 +62,7 @@ class Invoice(db.Model):
     grand_total = db.Column(db.Float, nullable=False)
     # 🎯 Payment and Split States
     is_paid = db.Column(db.Boolean, default=False)
+    payment_method = db.Column(db.String(20), default='Cash')
     split_gst = db.Column(db.Boolean, default=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -72,6 +76,9 @@ class InvoiceItem(db.Model):
     
     quantity = db.Column(db.Integer, nullable=False)
     price_at_purchase = db.Column(db.Float, nullable=False) 
+    base_price_at_purchase = db.Column(db.Float, nullable=True) # MRP at time of sale
+    discount_type = db.Column(db.String(10), nullable=True)
+    discount_value = db.Column(db.Float, default=0.0)
     gst_percentage_at_purchase = db.Column(db.Float, nullable=False)
     # 🎯 Custom CGST/SGST overrides
     cgst_percentage = db.Column(db.Float, default=0.0)
