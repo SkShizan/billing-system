@@ -54,3 +54,54 @@ def send_otp_email(to_email, company_name, otp):
         return True, "OTP sent successfully!"
     except Exception as e:
         return False, str(e)
+    
+   #whatsapp automation to remove it just remove below code 
+import requests
+import json
+
+def send_greenapi_whatsapp(phone_number, customer_name, company_name, invoice_no, amount, invoice_link):
+    """
+    Sends an automated WhatsApp message using Green API.
+    """
+    # ⚠️ Replace these with your actual credentials from the Green API Console
+    ID_INSTANCE = "7107590992"
+    API_TOKEN_INSTANCE = "8946294447a54c5cbb5d402068342d165bc1b9f76ac44e129f"
+    
+    url = f"https://api.green-api.com/waInstance{ID_INSTANCE}/sendMessage/{API_TOKEN_INSTANCE}"
+    
+    # 1. Format the phone number (Green API requires CountryCode + Number + @c.us)
+    clean_phone = phone_number.replace("+", "").replace(" ", "").replace("-", "")
+    if len(clean_phone) == 10:
+        clean_phone = "91" + clean_phone  # Add 91 if it's a 10-digit Indian number
+        
+    chat_id = f"{clean_phone}@c.us" # 🎯 THIS IS CRUCIAL FOR GREEN API
+    
+    # 2. Construct the exact message body
+    message_body = (
+        f"Hello {customer_name},\n\n"
+        f"This is an automated message from *{company_name}*.\n"
+        f"Your invoice *{invoice_no}* for the total amount of *₹{amount}* has been generated.\n\n"
+        f"📄 *Click the secure link below to view and download your PDF Invoice:*\n"
+        f"{invoice_link}\n\n"
+        f"Thank you for your business!"
+    )
+    
+    payload = {
+        "chatId": chat_id,
+        "message": message_body
+    }
+    
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        if response.status_code == 200:
+            return True, "WhatsApp sent successfully via Green API!"
+        else:
+            print(f"Green API Error: {response.text}")
+            return False, f"Green API Error: {response.text}"
+    except Exception as e:
+        print(f"Exception: {e}")
+        return False, str(e)

@@ -29,7 +29,26 @@
         .invoice-box {
             background-color: #fff; max-width: 800px; margin: auto; padding: 40px;
             border-radius: 8px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: relative; /* 🎯 NEEDED FOR WATERMARK */
+            overflow: hidden;   /* 🎯 Keeps watermark strictly inside the white box */
         }
+        
+        /* 🎯 NEW WATERMARK CSS */
+        .watermark-paid {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 160px;
+            color: rgba(128, 128, 128, 0.12); /* Faint Grey Color */
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 20px;
+            z-index: 9999; /* Sits on top of the elements */
+            pointer-events: none; /* Mouse clicks pass right through it */
+            user-select: none; /* Cannot be highlighted */
+        }
+
         .header { width: 100%; display: table; padding-bottom: 20px; border-bottom: 2px solid #eee; margin-bottom: 20px; }
         .header-left { display: table-cell; text-align: left; vertical-align: top; }
         .header-right { display: table-cell; text-align: right; vertical-align: top; }
@@ -71,6 +90,11 @@
 </div>
 
 <div class="invoice-box" id="invoice-content">
+    
+    {% if invoice.is_paid %}
+        <div class="watermark-paid">PAID</div>
+    {% endif %}
+
     <div class="header">
         <div class="header-left">
             {% if invoice.company.logo_path %}
@@ -85,10 +109,7 @@
             <div class="invoice-title">Tax Invoice</div>
             <div><strong>Invoice No:</strong> {{ invoice.invoice_number }}</div>
             <div><strong>Date:</strong> {{ invoice.created_at.strftime('%d %b %Y') }}</div>
-            {% if invoice.is_paid %}
-                <div style="margin-top: 10px; color: #27ae60; font-weight: bold; font-size: 16px;">PAID</div>
-            {% endif %}
-        </div>
+            </div>
     </div>
 
     <div class="billing-info">
@@ -181,14 +202,13 @@
             margin:       0.2,
             filename:     '{{ invoice.invoice_number }}.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 }, // High resolution for clear text
+            html2canvas:  { scale: 2 }, 
             jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
         
         html2pdf().set(opt).from(element).save();
     }
 
-    // 2. Logic for Sending the Public Link via WhatsApp
     // 2. Logic for Sending the Public Link via WhatsApp
     {% if not is_public %}
     function sendWhatsApp() {
@@ -204,16 +224,10 @@
         const amount = '{{ "%.2f"|format(invoice.grand_total) }}';
         const companyName = "{{ invoice.company.name }}";
 
-        // Generate the exact public link
         const invoiceLink = `${window.location.origin}/billing/public/invoice/${invNo}`;
-
-        // Create the raw message with standard line breaks
         const rawMessage = `Hello ${name},\n\nThis is an automated message from *${companyName}*.\nYour invoice *${invNo}* for the total amount of *₹${amount}* has been generated.\n\n📄 *Click the secure link below to view and download your PDF Invoice:*\n${invoiceLink}\n\nThank you for your business!`;
-
-        // Safely encode the entire message so WhatsApp parses it perfectly
         const encodedMessage = encodeURIComponent(rawMessage);
 
-        // Redirect to WhatsApp API
         const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
         window.open(url, '_blank');
     }

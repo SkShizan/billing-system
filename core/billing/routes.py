@@ -98,6 +98,23 @@ def generate_bill():
             db.session.add(inv_item)
     
     db.session.commit()
+    #whatsapp automation to remove it just remove below code From here
+    from core.utils import send_greenapi_whatsapp
+    
+    # Construct the full public link dynamically
+    domain = request.host_url.rstrip('/')
+    public_link = f"{domain}/billing/public/invoice/{inv_num}"
+    
+    # Fire the API call silently in the background
+    send_greenapi_whatsapp(
+        phone_number=customer.phone_number,
+        customer_name=customer.name,
+        company_name=company.name,
+        invoice_no=inv_num,
+        amount=invoice.grand_total,
+        invoice_link=public_link
+    )
+    #whatsapp automation to remove it just remove above code Till here
     return jsonify({"success": True, "invoice_id": invoice.id})
 
 # 🎯 NEW: Toggle Payment API for History Page
