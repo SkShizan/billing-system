@@ -140,11 +140,76 @@ def delete_product(id):
     flash("Product deleted.", "info")
     return redirect(url_for('inventory.add_product'))
 
+from sqlalchemy import func, case
+
 @inventory_bp.route('/api/hsn-suggest')
 def hsn_suggest():
-    query = request.args.get('q', '').strip().lower()
-    if len(query) < 2: return jsonify([])
+    query_string = request.args.get('q', '').strip().lower()
+    
+    if len(query_string) < 2: 
+        return jsonify([])
 
-    matches = HSNDictionary.query.filter(HSNDictionary.description.ilike(f'%{query}%')).limit(15).all()
-    results = [{"keyword": m.description, "hsn": m.hsn_code, "gst": m.gst_rate} for m in matches]
+    # 1. 🎯 NUMERIC SEARCH: If they type numbers, they want the exact HSN Code
+    if query_string.isdigit():
+        matches = HSNDictionary.query.filter(
+            HSNDictionary.hsn_code.ilike(f'%{query_string}%')
+        ).limit(15).all()
+        results = [{"keyword": m.description, "hsn": m.hsn_code, "gst": m.gst_rate} for m in matches]
+        return jsonify(results)
+
+    # 2. 🎯 TEXT SEARCH: Split words and ignore useless "stop-words"
+    words = query_string.split()
+    stop_words = {'and', 'or', 'the', 'for', 'of', 'in', 'to', 'with', 'a', 'an'}
+
+    search_filters = []
+    score_cases = []
+
+    for word in words:
+        if word in stop_words:
+            continue
+
+        root_word = word
+        # Strip common suffixes so "designing" perfectly matches "design"
+        if len(root_word) > 4:
+            if root_word.endswith('ing'): root_word = root_word[:-3]
+            elif root_word.endswith('ies'): root_word = root_word[:-3] + 'y'
+            elif root_word.endswith('es'): root_word = root_word[:-2]
+            elif root_word.endswith('ed'): root_word = root_word[:-2]
+            elif root_word.endswith('s') and not root_word.endswith('ss'): root_word = root_word[:-1]
+        
+        if len(root_word) >= 3:
+            condition = HSNDictionary.description.ilike(f'%{root_word}%')
+            search_filters.append(condition)
+            
+            # 🎯 ASSIGN POINTS: Give +1 point if this specific word is found
+            score_cases.append(case((condition, 1), else_=0))
+
+    if not search_filters:
+        return jsonify([])
+
+    # 3. 🎯 CALCULATE TOTAL RELEVANCE SCORE
+    # Safely add the SQL case points together
+    relevance_score = score_cases[0]
+    for score in score_cases[1:]:
+        relevance_score += score
+
+    # 4. 🎯 EXECUTE THE SMART ALGORITHM
+    # Priority 1: Highest Score wins (Matches the most words)
+    # Priority 2: Tie-Breaker -> Shorter string wins (Fixes the Graphic Design issue)
+    matches = HSNDictionary.query.filter(
+        db.or_(*search_filters)
+    ).order_by(
+        relevance_score.desc(),
+        func.length(HSNDictionary.description).asc()
+    ).limit(15).all()
+
+    # Format for the UI
+    results = [
+        {
+            "keyword": m.description, 
+            "hsn": m.hsn_code, 
+            "gst": m.gst_rate
+        } for m in matches
+    ]
+    
     return jsonify(results)

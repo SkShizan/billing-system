@@ -56,7 +56,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">GST (%)</label>
-                            <input type="number" step="0.01" name="gst_percentage" id="gstPercentage" class="form-control bg-light border-0" required readonly style="box-shadow: inset 0 0 0 1px var(--color-sand);">
+                            <input type="number" step="0.01" name="gst_percentage" id="gstPercentage" class="form-control" placeholder="Enter %" required>
                         </div>
                     </div>
 
@@ -106,6 +106,7 @@
                     {% endif %}
                 </form>
             </div>
+            
             
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
@@ -250,7 +251,7 @@
 </div>
 
 <script>
-    // 🎯 NEW: Calculates final price automatically for the "Add New Product" form
+    // 🎯 Calculates final price automatically for the "Add New Product" form
     function calcMainFinalPrice() {
         let base = parseFloat(document.getElementById('basePrice').value) || 0;
         let type = document.getElementById('discountType').value;
@@ -266,7 +267,7 @@
         document.getElementById('finalPrice').value = final > 0 ? final.toFixed(2) : '0.00';
     }
 
-    // 🎯 NEW: Listens to ALL "Edit Modal" forms dynamically and calculates final price
+    // 🎯 Listens to ALL "Edit Modal" forms dynamically and calculates final price
     document.addEventListener('input', function(e) {
         if (e.target.classList.contains('edit-calc')) {
             let form = e.target.closest('form');
@@ -307,28 +308,31 @@
                 if (data.length > 0) {
                     data.forEach(item => {
                         const li = document.createElement('li');
-                        li.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 border-bottom';
+                        li.className = 'list-group-item list-group-item-action p-3 border-bottom';
                         li.style.cursor = 'pointer';
-                        li.style.borderColor = 'var(--color-sand)';
                         
                         li.innerHTML = `
-                            <div style="font-size: 0.9rem; max-width: 80%;">
-                                <strong style="color: var(--color-sage);">${item.hsn}</strong><br> 
-                                <small class="text-muted">${item.keyword}</small>
-                            </div>
-                            <span class="badge" style="background-color: var(--color-cream); color: var(--color-taupe); border: 1px solid var(--color-sand);">${item.gst}% GST</span>
+                            <strong class="text-sage">${item.hsn}</strong><br>
+                            <small class="text-muted" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${item.keyword}</small>
                         `;
                         
                         li.onclick = () => {
+                            // 1. Fill the HSN code
                             document.getElementById('hsnCode').value = item.hsn;
-                            document.getElementById('gstPercentage').value = item.gst;
+                            
+                            // 2. Clear the GST box and focus it so the seller can type
+                            const gstInput = document.getElementById('gstPercentage');
+                            gstInput.value = ""; 
+                            gstInput.focus(); 
+                            
+                            // 3. Hide the suggestions
                             suggestionBox.style.display = 'none';
                         };
                         suggestionBox.appendChild(li);
                     });
                     suggestionBox.style.display = 'block';
                 } else {
-                    suggestionBox.innerHTML = '<li class="list-group-item text-muted text-center small p-3">No matching HSN codes found. Ask developer to add this category.</li>';
+                    suggestionBox.innerHTML = '<li class="list-group-item text-muted small p-3 text-center">No matching codes found.</li>';
                     suggestionBox.style.display = 'block';
                 }
             } catch (error) { console.error("Error", error); }

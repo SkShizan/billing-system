@@ -7,6 +7,8 @@ from core.models import HSNDictionary
 from core.models import SMTPSettings
 from core.models import Company
 from werkzeug.utils import secure_filename
+import pandas as pd
+from flask import request, flash, redirect, url_for
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -255,3 +257,84 @@ def settings():
         return redirect(url_for('admin.settings'))
         
     return render_template('admin/settings.html', smtp=smtp)
+
+@admin_bp.route('/upload-master-excel', methods=['POST'])
+def upload_master_excel():
+    """
+    Developer tool: Upload the official HSN/SAC .xlsx file.
+    Reads the first two columns (Code and Description) and seeds the DB.
+    """
+    if 'file' not in request.files:
+        flash("No file uploaded.", "danger")
+        return redirect(url_for('admin.dashboard')) # Adjust to your settings page
+        
+    file = request.files['file']
+    if file.filename == '':
+        flash("No file selected.", "danger")
+        return redirect(url_for('admin.dashboard'))
+
+    # Check for Excel file extensions
+    if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+        try:
+            # Read the Excel file into a Pandas DataFrame
+            # engine='openpyxl' is required for .xlsx files
+            df = pd.read_excel(file, engine='openpyxl')
+            
+            count = 0
+            
+            # Iterate through the rows in the dataframe
+            for index, row in df.iterrows():
+                # We assume Column 1 (index 0) is Code, Column 2 (index 1) is Description
+                if pd.notna(row.iloc[0]) and pd.notna(row.iloc[1]):
+                    # Convert to string and strip whitespace
+                    code = str(row.iloc[0]).strip()
+                    desc = str(row.iloc[1]).strip()
+                    
+                    if not code or not desc:
+                        continue
+
+                    # Prevent duplicate crashes
+                    existing = HSNDictionary.query.filter_by(hsn_code=code).first()
+                    if not existing:
+                        new_entry = HSNDictionary(
+                            hsn_code=code,
+                            description=desc,
+                            gst_rate=0.0  # Default to 0, seller fills this manually
+                        )
+                        db.session.add(new_entry)
+                        count += 1
+                        
+                        # Commit in batches of 1000 to keep memory stable
+                        if count % 1000 == 0:
+                            db.session.commit()
+
+            # Final commit for the remaining rows
+            db.session.commit()
+            flash(f"Success! Imported {count} new codes from Excel.", "success")
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error processing Excel: {str(e)}", "danger")
+            
+    else:
+        flash("Please upload a valid .xlsx or .xls file.", "warning")
+        
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/delete-all-hsn', methods=['POST'])
+def delete_all_hsn():
+    """
+    Developer tool: Wipes the entire HSNDictionary table clean.
+    """
+    try:
+        # Bulk delete all rows in the table
+        num_deleted = db.session.query(HSNDictionary).delete()
+        db.session.commit()
+        
+        flash(f"Successfully deleted all {num_deleted} HSN/SAC codes from the database.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error wiping database: {str(e)}", "danger")
+        
+    # Adjust 'admin.dashboard' if your blueprint is named differently (e.g., 'developer.dashboard')
+    return redirect(url_for('admin.dashboard'))

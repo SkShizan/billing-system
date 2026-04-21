@@ -88,6 +88,12 @@
                 <a href="/developer/dashboard" class="btn btn-outline-taupe ms-2">Clear</a>
             {% endif %}
         </form>
+    
+    
+    <form action="{{ url_for('admin.delete_all_hsn') }}" method="POST" class="d-inline" onsubmit="return confirm('⚠️ WARNING: Are you sure you want to delete ALL HSN/SAC codes? This action is instant and cannot be undone!');">
+        <button type="submit" class="btn btn-danger fw-bold shadow-sm">🗑️ Delete All HSN/SAC Codes</button>
+    </form>
+</div>
         
         <button class="btn btn-terracotta" data-bs-toggle="modal" data-bs-target="#addModal">+ Add New HSN</button>
     </div>
@@ -153,6 +159,15 @@
             </table>
         </div>
     </div>
+    <div class="card card-glass border-0 mb-4 p-3">
+    <h5 class="text-sage fw-bold">Upload Government Master Excel</h5>
+    <p class="text-muted small">Upload the official HSN_SAC.xlsx file here to update the global dictionary.</p>
+    
+    <form action="/developer/upload-master-excel" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-3">
+    <input type="file" name="file" class="form-control w-auto" accept=".xlsx, .xls" required>
+        <button type="submit" class="btn btn-sage fw-bold shadow-sm">Upload Excel & Sync DB</button>
+    </form>
+</div>
     
     <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-3 px-4 rounded-bottom-4">
         <small class="text-muted fw-medium">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
