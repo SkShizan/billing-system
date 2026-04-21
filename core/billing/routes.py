@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from core.models import db, Customer, Product, Invoice, InvoiceItem, Company
 import uuid
 from sqlalchemy import or_
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import func
 
 billing_bp = Blueprint('billing', __name__)
@@ -48,13 +48,12 @@ def get_products():
 
 @billing_bp.route('/api/generate_bill', methods=['POST'])
 def generate_bill():
-    """API: Processes the cart and saves the invoice to the database."""
+    """API: Processes the cart and saves or UPDATES the invoice to the database."""
     if not is_logged_in(): return jsonify({"success": False, "error": "Not logged in"})
     
     company_id = session['company_id']
     data = request.json
     
-    # Fetch the company to get the invoice sequence formatting
     company = Company.query.get(company_id)
     
     # 1. Handle Customer
@@ -68,27 +67,51 @@ def generate_bill():
         db.session.add(customer)
         db.session.flush() 
     
-    # 2. 🎯 Generate Custom Invoice Number (e.g., INV-WB-0001SBD)
-    company.invoice_seq += 1
-    st_code = (company.state_code or "ST").upper()
-    sh_code = (company.short_code or "CMP").upper()
-    inv_num = f"INV-{st_code}-{company.invoice_seq:04d}{sh_code}"
+    # 2. 🎯 CHECK IF WE ARE EDITING AN EXISTING INVOICE
+    edit_invoice_id = data.get('edit_invoice_id')
     
-    # 3. Create Invoice
-    invoice = Invoice(
-        company_id=company_id,
-        invoice_number=inv_num,
-        customer_id=customer.id,
-        subtotal=data['subtotal'],
-        discount_type=data['discount_type'],
-        discount_value=data['discount_value'],
-        total_tax=data['total_tax'],
-        grand_total=data['grand_total'],
-        is_paid=data.get('is_paid', False),     # 🎯 Coming from frontend checkbox
-        payment_method=data.get('payment_method', 'Cash'),
-        split_gst=data.get('split_gst', True)   # 🎯 Coming from frontend checkbox
-    )
-    db.session.add(invoice)
+    if edit_invoice_id:
+        # --- UPDATE EXISTING INVOICE ---
+        invoice = Invoice.query.filter_by(id=edit_invoice_id, company_id=company_id).first()
+        if not invoice:
+            return jsonify({"success": False, "error": "Invoice not found"})
+            
+        invoice.customer_id = customer.id
+        invoice.subtotal = data['subtotal']
+        invoice.discount_type = data['discount_type']
+        invoice.discount_value = data['discount_value']
+        invoice.total_tax = data['total_tax']
+        invoice.grand_total = data['grand_total']
+        invoice.is_paid = data.get('is_paid', invoice.is_paid)
+        invoice.payment_method = data.get('payment_method', invoice.payment_method)
+        invoice.split_gst = data.get('split_gst', invoice.split_gst)
+        
+        # Clear old items so we can insert the newly edited ones
+        InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
+        inv_num = invoice.invoice_number
+        
+    else:
+        # --- CREATE NEW INVOICE ---
+        company.invoice_seq += 1
+        st_code = (company.state_code or "ST").upper()
+        sh_code = (company.short_code or "CMP").upper()
+        inv_num = f"INV-{st_code}-{company.invoice_seq:04d}{sh_code}"
+        
+        invoice = Invoice(
+            company_id=company_id,
+            invoice_number=inv_num,
+            customer_id=customer.id,
+            subtotal=data['subtotal'],
+            discount_type=data['discount_type'],
+            discount_value=data['discount_value'],
+            total_tax=data['total_tax'],
+            grand_total=data['grand_total'],
+            is_paid=data.get('is_paid', False),
+            payment_method=data.get('payment_method', 'Cash'),
+            split_gst=data.get('split_gst', True)
+        )
+        db.session.add(invoice)
+        
     db.session.flush()
 
     # 4. Add Invoice Items
@@ -99,29 +122,24 @@ def generate_bill():
                 invoice_id=invoice.id,
                 product_id=product.id,
                 quantity=item['quantity'],
-                
-                # 🎯 NEW: Product CRM & Override data captured from the frontend
                 price_at_purchase=item.get('final_price', product.current_price), 
                 base_price_at_purchase=item.get('base_price', product.current_price), 
                 discount_type=item.get('discount_type'),
                 discount_value=item.get('discount_value', 0.0),
-                
                 gst_percentage_at_purchase=product.gst_percentage,
-                # 🎯 Capture the manual CGST/SGST split values from the frontend
                 cgst_percentage=item.get('cgst', 0.0),
                 sgst_percentage=item.get('sgst', 0.0)
             )
             db.session.add(inv_item)
     
     db.session.commit()
+    
     #whatsapp automation to remove it just remove below code From here
     from core.utils import send_greenapi_whatsapp
     
-    # Construct the full public link dynamically
     domain = request.host_url.rstrip('/')
     public_link = f"{domain}/billing/public/invoice/{inv_num}"
     
-    # Fire the API call silently in the background
     send_greenapi_whatsapp(
         phone_number=customer.phone_number,
         customer_name=customer.name,
@@ -131,12 +149,25 @@ def generate_bill():
         invoice_link=public_link
     )
     #whatsapp automation to remove it just remove above code Till here
+    
     return jsonify({"success": True, "invoice_id": invoice.id})
 
-# 🎯 NEW: Toggle Payment API for History Page
-@billing_bp.route('/api/update_payment/<int:invoice_id>', methods=['POST'])
-def update_payment(invoice_id):
-    """API: Marks an invoice as paid/unpaid and updates payment method instantly."""
+# 🎯 NEW: Edit Invoice Route
+@billing_bp.route('/edit/<int:invoice_id>')
+def edit_invoice(invoice_id):
+    if not is_logged_in(): 
+        return redirect(url_for('auth.login'))
+    
+    # Fetch the invoice securely
+    invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first_or_404()
+    
+    # Render the main POS page, but pass the invoice data to it
+    return render_template('billing/index.html', edit_invoice=invoice)
+
+
+@billing_bp.route('/api/update_invoice_meta/<int:invoice_id>', methods=['POST'])
+def update_invoice_meta(invoice_id):
+    """API: Marks an invoice as paid/unpaid, updates payment method, and toggles GST splitting."""
     if not is_logged_in(): return jsonify({"success": False})
     
     invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first()
@@ -146,42 +177,53 @@ def update_payment(invoice_id):
             invoice.is_paid = data['is_paid']
         if 'payment_method' in data:
             invoice.payment_method = data['payment_method']
+        if 'split_gst' in data:
+            invoice.split_gst = data['split_gst']
         db.session.commit()
         return jsonify({"success": True})
     return jsonify({"success": False}), 404
-# --- INTERNAL VIEW (Requires Login) ---
+
+@billing_bp.route('/delete/<int:invoice_id>', methods=['POST'])
+def delete_invoice(invoice_id):
+    if not is_logged_in(): 
+        return redirect(url_for('auth.login'))
+    
+    invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first_or_404()
+    
+    try:
+        InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
+        db.session.delete(invoice)
+        db.session.commit()
+        flash(f"Invoice {invoice.invoice_number} deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting invoice: {str(e)}", "danger")
+        
+    return redirect(url_for('billing.history'))
+
 @billing_bp.route('/invoice/<int:invoice_id>')
 def view_invoice(invoice_id):
     if not is_logged_in(): return redirect(url_for('auth.login'))
-    
-    # Security: Ensure company only sees its own invoices
     invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first_or_404()
     return render_template('billing/invoice_template.html', invoice=invoice, is_public=False)
 
-# --- PUBLIC VIEW (For WhatsApp Links) ---
 @billing_bp.route('/public/invoice/<invoice_number>')
 def public_view_invoice(invoice_number):
-    """Secure, read-only link for customers (No login required)."""
     invoice = Invoice.query.filter_by(invoice_number=invoice_number).first_or_404()
-    # Pass is_public=True so the template knows to hide internal buttons
     return render_template('billing/invoice_template.html', invoice=invoice, is_public=True)
 
 @billing_bp.route('/history')
 def history():
-    # SECURITY: Check if logged in
     company_id = session.get('company_id')
     if not company_id:
         flash("Please log in to view history.", "warning")
         return redirect(url_for('auth.login'))
 
-    # Get search and pagination parameters
     page = request.args.get('page', 1, type=int)
     search_query = request.args.get('search', '').strip()
 
-    # Base query: Invoices for THIS company, joining Customer so we can search by name/phone
     query = Invoice.query.join(Customer).filter(Invoice.company_id == company_id)
 
-    # Apply search filter if present
     if search_query:
         query = query.filter(
             or_(
@@ -191,7 +233,6 @@ def history():
             )
         )
 
-    # Paginate with a limit of 10 invoices per page
     pagination = query.order_by(Invoice.created_at.desc()).paginate(page=page, per_page=10)
 
     return render_template(
@@ -199,9 +240,6 @@ def history():
         pagination=pagination, 
         search_query=search_query
     )
-
-from datetime import datetime, timedelta
-from sqlalchemy import func
 
 @billing_bp.route('/dashboard')
 def dashboard():
@@ -212,7 +250,6 @@ def dashboard():
     today = datetime.utcnow().date()
     start_of_month = today.replace(day=1)
     
-    # 1. Core Invoice Queries
     today_invoices = Invoice.query.filter(
         Invoice.company_id == company_id,
         func.date(Invoice.created_at) == today
@@ -223,13 +260,11 @@ def dashboard():
         func.date(Invoice.created_at) >= start_of_month
     ).all()
 
-    # 2. Revenue Calculations
     today_revenue = sum(inv.grand_total for inv in today_invoices)
     month_revenue = sum(inv.grand_total for inv in month_invoices)
     month_gross_sales = sum(inv.subtotal for inv in month_invoices)
     month_tax = sum(inv.total_tax for inv in month_invoices)
     
-    # 3. 🎯 NEW: Advanced Metrics (Average Order Value)
     aov = (month_revenue / len(month_invoices)) if month_invoices else 0.0
     total_products = Product.query.filter_by(company_id=company_id).count()
 
@@ -239,16 +274,14 @@ def dashboard():
         'month_revenue': month_revenue,
         'month_gross_sales': month_gross_sales,
         'month_tax': month_tax,
-        'aov': aov, # 🎯 New Metric
+        'aov': aov,
         'total_products': total_products
     }
 
-    # 4. Recent Transactions
     recent_invoices = Invoice.query.filter_by(company_id=company_id)\
         .order_by(Invoice.created_at.desc())\
         .limit(6).all()
 
-    # 5. 🎯 Main Chart: 7-Day Revenue Trend
     chart_labels = []
     chart_data = []
     for i in range(6, -1, -1):
@@ -262,7 +295,6 @@ def dashboard():
         chart_labels.append(label)
         chart_data.append(float(daily_revenue))
 
-    # 6. 🎯 NEW Chart: Payment Method Breakdown (MTD)
     payment_counts = db.session.query(Invoice.payment_method, func.count(Invoice.id))\
         .filter(Invoice.company_id == company_id, func.date(Invoice.created_at) >= start_of_month)\
         .group_by(Invoice.payment_method).all()
@@ -279,13 +311,12 @@ def dashboard():
         current_date=current_date,
         chart_labels=chart_labels, 
         chart_data=chart_data,
-        pay_labels=pay_labels, # 🎯 Pass to UI
-        pay_data=pay_data      # 🎯 Pass to UI
+        pay_labels=pay_labels,
+        pay_data=pay_data
     )
 
 @billing_bp.route('/customers')
 def customers_directory():
-    # SECURITY: Check if logged in
     company_id = session.get('company_id')
     if not company_id:
         flash("Please log in to view your customers.", "warning")
@@ -294,7 +325,6 @@ def customers_directory():
     page = request.args.get('page', 1, type=int)
     search_query = request.args.get('search', '').strip()
 
-    # Create an aggregated query grouping by Customer
     query = db.session.query(
         Customer,
         func.count(Invoice.id).label('total_visits'),
@@ -304,7 +334,6 @@ def customers_directory():
      .filter(Invoice.company_id == company_id) \
      .group_by(Customer.id)
 
-    # Apply search filter for name or phone number
     if search_query:
         query = query.filter(
             or_(
@@ -313,7 +342,6 @@ def customers_directory():
             )
         )
 
-    # Order by their most recent visit, paginated
     pagination = query.order_by(func.max(Invoice.created_at).desc()).paginate(page=page, per_page=10)
 
     return render_template(

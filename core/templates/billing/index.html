@@ -49,21 +49,19 @@
     .pos-table-wrapper { 
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch;
-        min-height: 250px; /* Gives room for the search dropdown to open without getting cut off */
+        min-height: 250px; 
     }
     
-    /* Force a minimum width so inputs never squish and become unusable */
     .table-pos { min-width: 1050px; margin-bottom: 0; }
     .table-pos th { white-space: nowrap; background-color: #fcfbf9; }
 
-    /* 🎯 Hides the default dropdown arrow */
     .no-arrow {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-        background-image: none !important; /* Removes Bootstrap's custom arrow */
-        padding-right: 8px !important; /* Adjusts padding since the arrow is gone */
-        text-align: center; /* Centers the text (like ₹ or %) nicely */
+        background-image: none !important;
+        padding-right: 8px !important;
+        text-align: center; 
     }
 </style>
 
@@ -199,7 +197,13 @@
 
 <script>
     let searchTimers = {};
-    window.onload = function() { addRow(); };
+    
+    // We remove the default onload row generation if we are editing an invoice
+    window.onload = function() { 
+        if (!window.EDIT_INVOICE_ID) {
+            addRow(); 
+        }
+    };
 
     function addRow() {
         const tbody = document.getElementById('cartBody');
@@ -211,12 +215,12 @@
         tr.innerHTML = `
             <td class="ps-4">
                 <div class="position-relative">
-                    <input type="text" class="table-input fw-bold text-dark" placeholder="Search product..." onkeyup="searchProduct(${rowId}, this)" autocomplete="off" style="border-bottom: 1px dashed #ccc; border-radius: 0;">
+                    <input type="text" class="table-input fw-bold text-dark product-search-input" placeholder="Search product..." onkeyup="searchProduct(${rowId}, this)" autocomplete="off" style="border-bottom: 1px dashed #ccc; border-radius: 0;">
                     <input type="hidden" class="product-id">
                     <ul class="list-group position-absolute w-100 shadow border-0" id="productSuggestions-${rowId}" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; border-radius: 8px; top: 100%; left: 0;"></ul>
                 </div>
             </td>
-            <td><input type="text" class="table-input text-muted text-center" readonly tabindex="-1"></td>
+            <td><input type="text" class="table-input text-muted text-center hsn-input" readonly tabindex="-1"></td>
             <td><input type="number" class="table-input base-price-input text-center fw-semibold text-dark" readonly tabindex="-1"></td>
             
             <td>
@@ -240,7 +244,7 @@
             
             <td class="text-end pe-3">
                 <div class="d-flex flex-column align-items-end justify-content-center h-100">
-                    <input type="text" class="table-input text-dark fw-bold text-end p-0 m-0 fs-5" readonly tabindex="-1" value="0.00" style="background: transparent !important;">
+                    <input type="text" class="table-input text-dark fw-bold text-end p-0 m-0 fs-5 row-total-input" readonly tabindex="-1" value="0.00" style="background: transparent !important;">
                     <small class="text-muted" style="font-size: 0.65rem;">Rate: ₹<span class="final-rate-display">0.00</span></small>
                 </div>
             </td>
@@ -259,16 +263,24 @@
         const hasProduct = row.querySelector('.product-id').value !== '';
         
         if (isSplit && hasProduct) {
-            let half = (rawGst / 2).toFixed(1);
+            let cgstVal = (rawGst / 2).toFixed(1);
+            let sgstVal = (rawGst / 2).toFixed(1);
+            
+            // Retain pre-existing input values if we are currently editing
+            const existingCgst = row.querySelector('.cgst-input');
+            const existingSgst = row.querySelector('.sgst-input');
+            if (existingCgst && existingCgst.value) cgstVal = existingCgst.value;
+            if (existingSgst && existingSgst.value) sgstVal = existingSgst.value;
+
             container.innerHTML = `
                 <div class="d-flex flex-column gap-1">
                     <div class="d-flex align-items-center bg-light rounded-1 px-1">
                         <span class="text-muted fw-bold" style="font-size: 0.6rem; width: 30px;">CGST</span>
-                        <input type="number" class="table-input cgst-input px-1 py-0 text-end" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                        <input type="number" class="table-input cgst-input px-1 py-0 text-end" value="${cgstVal}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
                     </div>
                     <div class="d-flex align-items-center bg-light rounded-1 px-1">
                         <span class="text-muted fw-bold" style="font-size: 0.6rem; width: 30px;">SGST</span>
-                        <input type="number" class="table-input sgst-input px-1 py-0 text-end" value="${half}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
+                        <input type="number" class="table-input sgst-input px-1 py-0 text-end" value="${sgstVal}" step="0.1" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()">
                     </div>
                 </div>
             `;
@@ -290,9 +302,8 @@
         const suggestionBox = document.getElementById(`productSuggestions-${rowId}`);
         const row = document.getElementById(`row-${rowId}`);
         
-        // Grab specific inputs dynamically based on position since we removed distinct classes from some elements to make them look cleaner
-        const hsnInput = row.children[1].querySelector('input');
-        const totalInput = row.children[6].querySelector('input');
+        const hsnInput = row.querySelector('.hsn-input');
+        const totalInput = row.querySelector('.row-total-input');
 
         if (query.length < 2) {
             suggestionBox.style.display = 'none';
@@ -320,7 +331,7 @@
 
                         li.onclick = () => {
                             inputElem.value = p.name;
-                            inputElem.style.borderBottom = "1px solid transparent"; // Remove dash line once selected
+                            inputElem.style.borderBottom = "1px solid transparent"; 
                             
                             row.querySelector('.product-id').value = p.id;
                             hsnInput.value = p.hsn || '';
@@ -392,8 +403,7 @@
             const rowBaseTotal = finalRate * qty;
             const rowTax = rowBaseTotal * (totalGstPercent / 100);
             
-            // Total Input is the 7th cell (index 6)
-            row.children[6].querySelector('input').value = (rowBaseTotal + rowTax).toFixed(2);
+            row.querySelector('.row-total-input').value = (rowBaseTotal + rowTax).toFixed(2);
             subtotal += rowBaseTotal; 
             totalTax += rowTax;
         });
@@ -452,6 +462,7 @@
         btn.disabled = true; 
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
 
+        // 🎯 PAYLOAD UPDATED WITH edit_invoice_id
         const payload = {
             customer_name: custName, 
             customer_phone: custPhone,
@@ -463,6 +474,7 @@
             split_gst: isSplit,
             is_paid: isPaid,
             payment_method: paymentMethod,
+            edit_invoice_id: window.EDIT_INVOICE_ID || null,
             items: items
         };
 
@@ -478,4 +490,73 @@
         }
     }
 </script>
+
+{% if edit_invoice %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. Setup the Global Edit ID Flag
+    window.EDIT_INVOICE_ID = {{ edit_invoice.id }};
+    
+    const headerTitle = document.querySelector('.pos-title');
+    if(headerTitle) headerTitle.innerText = "✏️ Editing Invoice: {{ edit_invoice.invoice_number }}";
+    
+    // 2. Pre-fill Customer Data
+    document.getElementById('custPhone').value = {{ edit_invoice.customer.phone_number | tojson }};
+    document.getElementById('custName').value = {{ edit_invoice.customer.name | tojson }};
+
+    // 3. Pre-fill Invoice Master Settings
+    document.getElementById('discountType').value = '{{ edit_invoice.discount_type }}';
+    document.getElementById('discountValue').value = {{ edit_invoice.discount_value }};
+    
+    if ({{ 'true' if edit_invoice.split_gst else 'false' }}) {
+        document.getElementById('splitGstMasterToggle').checked = true;
+    }
+    if ({{ 'true' if edit_invoice.is_paid else 'false' }}) {
+        document.getElementById('isPaidToggle').checked = true;
+        document.getElementById('paymentMethod').value = '{{ edit_invoice.payment_method }}';
+    }
+
+    // 4. Inject existing invoice items into the cart UI
+    const tbody = document.getElementById('cartBody');
+    tbody.innerHTML = ''; // Ensure we start with a clean slate
+    
+    {% for item in edit_invoice.items %}
+        (function() {
+            addRow(); // Generate the HTML skeleton row
+            
+            const newRow = tbody.lastElementChild;
+            
+            newRow.querySelector('.product-search-input').value = {{ item.product.name | tojson }};
+            newRow.querySelector('.product-search-input').style.borderBottom = "1px solid transparent";
+            
+            newRow.querySelector('.product-id').value = {{ item.product_id }};
+            newRow.querySelector('.hsn-input').value = '{{ item.product.hsn_code or "" }}';
+            newRow.querySelector('.base-price-input').value = {{ item.base_price_at_purchase }};
+            newRow.querySelector('.discount-type-input').value = '{{ item.discount_type or "flat" }}';
+            newRow.querySelector('.discount-value-input').value = {{ item.discount_value or 0 }};
+            newRow.querySelector('.raw-gst').value = {{ item.gst_percentage_at_purchase }};
+            newRow.querySelector('.qty-input').value = {{ item.quantity }};
+            
+            // Re-render the GST layout (split vs normal)
+            updateRowGstView(newRow);
+            
+            // Safely inject specific tax splits if they existed
+            {% if edit_invoice.split_gst %}
+                setTimeout(() => {
+                    const cgst = newRow.querySelector('.cgst-input');
+                    const sgst = newRow.querySelector('.sgst-input');
+                    if(cgst) cgst.value = {{ item.cgst_percentage or 0 }};
+                    if(sgst) sgst.value = {{ item.sgst_percentage or 0 }};
+                }, 50);
+            {% endif %}
+        })();
+    {% endfor %}
+    
+    // Ensure all totals recalculate correctly after inputs are populated
+    setTimeout(calculateGrandTotal, 100);
+});
+</script>
+{% endif %}
+
 {% endblock %}

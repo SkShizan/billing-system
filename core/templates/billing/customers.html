@@ -1,219 +1,255 @@
 {% extends "base.html" %}
+
 {% block content %}
 <style>
-    /* Premium Panel Design */
-    .panel-card {
-        background: #ffffff;
-        border-radius: 16px;
-        border: 1px solid rgba(212, 194, 173, 0.4);
-        box-shadow: 0 4px 6px -1px rgba(102, 121, 107, 0.02), 0 10px 15px -3px rgba(102, 121, 107, 0.05);
+    /* --- Enterprise Typography & Colors --- */
+    :root {
+        --brand-sage: #66796b;
+        --brand-sage-dark: #4a5c50;
+        --text-dark: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+        --bg-surface: #ffffff;
+        --bg-body: #f9fafb;
+    }
+
+    .page-title { color: var(--text-dark); font-weight: 800; letter-spacing: -0.02em; font-size: 1.5rem; }
+    
+    /* --- Surface & Cards --- */
+    .enterprise-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
         overflow: hidden;
     }
-    .panel-header {
-        padding: 1.5rem;
-        background: linear-gradient(180deg, #ffffff 0%, #fcfbf9 100%);
-        border-bottom: 1px solid rgba(212, 194, 173, 0.3);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
 
-    /* Compact Search */
-    .compact-search {
+    /* --- Search Bar --- */
+    .search-input-group {
         display: flex;
-        background: #F8F5F1;
+        align-items: center;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
         border-radius: 8px;
-        padding: 0.25rem;
-        border: 1px solid var(--color-sand);
-        transition: all 0.2s ease;
+        padding: 0.25rem 0.5rem;
+        transition: all 0.2s;
     }
-    .compact-search:focus-within {
-        background: #ffffff;
-        border-color: var(--color-sage);
+    .search-input-group:focus-within {
+        background: var(--bg-surface);
+        border-color: var(--brand-sage);
         box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.1);
     }
-    .compact-search input {
+    .search-input-group input {
         border: none;
         background: transparent;
-        padding: 0.35rem 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        outline: none;
+        padding: 0.5rem;
+        font-size: 0.9rem;
         width: 100%;
-        min-width: 200px;
+        outline: none;
+        color: var(--text-dark);
     }
-    .compact-search button {
-        background: var(--color-sage);
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 0.25rem 1rem;
-        font-weight: 600;
-        font-size: 0.8125rem;
-        transition: background 0.2s;
-    }
-    .compact-search button:hover { background: #4a5c50; }
+    .search-input-group input::placeholder { color: #9ca3af; }
 
-    /* CRM Table Styling */
-    .crm-table { margin-bottom: 0; width: 100%; }
-    .crm-table th {
+    /* --- Enterprise Table --- */
+    .table-responsive { -webkit-overflow-scrolling: touch; }
+    .table-pro { width: 100%; margin-bottom: 0; border-collapse: collapse; }
+    .table-pro th {
+        background-color: var(--bg-body);
+        color: var(--text-muted);
         font-size: 0.75rem;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: var(--color-taupe);
-        font-weight: 700;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid rgba(212, 194, 173, 0.4);
-        background: #fcfbf9;
+        padding: 0.85rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
         white-space: nowrap;
     }
-    .crm-table td {
+    .table-pro td {
         padding: 1.25rem 1.5rem;
         vertical-align: middle;
-        border-bottom: 1px solid rgba(212, 194, 173, 0.2);
-        transition: background-color 0.2s;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-dark);
+        font-size: 0.875rem;
+        white-space: nowrap;
     }
-    .crm-table tbody tr:hover td { background-color: rgba(239, 223, 204, 0.1); }
+    .table-pro tbody tr { transition: background-color 0.15s ease; }
+    .table-pro tbody tr:hover { background-color: #f8fafc; }
 
-    /* Customer Avatar */
+    /* --- Avatars & Badges --- */
     .avatar-circle {
-        width: 42px;
-        height: 42px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--color-terracotta), var(--color-taupe));
+        background: linear-gradient(135deg, var(--brand-sage), var(--brand-sage-dark));
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
         font-size: 1.1rem;
-        margin-right: 12px;
-        box-shadow: 0 4px 6px rgba(215, 161, 132, 0.2);
+        box-shadow: 0 2px 4px rgba(102, 121, 107, 0.2);
     }
-
-    /* Badges */
+    
     .badge-vip {
-        background: rgba(215, 161, 132, 0.15);
-        color: var(--color-terracotta);
-        border: 1px solid rgba(215, 161, 132, 0.3);
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.7rem;
+        background-color: #fef3c7; /* Soft amber */
+        color: #b45309; /* Dark amber */
+        border: 1px solid #fde68a;
+        padding: 0.15rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.05em;
         margin-left: 8px;
+        vertical-align: middle;
     }
-    .ltv-text { color: var(--color-sage); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px; }
+
+    .badge-count {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    /* --- Typography Utilities --- */
+    .fw-medium { font-weight: 500; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .amount-display { font-size: 1.05rem; font-weight: 700; color: var(--text-dark); }
+    
+    /* --- Buttons --- */
+    .btn-view-bills {
+        background-color: var(--bg-surface);
+        color: var(--brand-sage);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.4rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-view-bills:hover {
+        background-color: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
 </style>
 
-<div class="row mt-4 mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-            <span class="fs-3 me-2 text-taupe">👥</span>
-            <h2 class="fw-bold mb-0" style="color: var(--color-sage); letter-spacing: -0.5px;">Customer Directory</h2>
+<div class="container-fluid py-4">
+    
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-1">Customer Directory</h1>
+            <p class="text-muted text-sm mb-0">Manage your client base and view purchase history.</p>
         </div>
-        <a href="/billing" class="btn fw-bold px-4 py-2 shadow-sm" style="background-color: var(--color-terracotta); color: white; border-radius: 8px;">+ New Sale</a>
+        <a href="/billing" class="btn btn-dark fw-medium px-4 py-2 rounded-3 shadow-sm text-nowrap" style="background-color: var(--brand-sage); border: none;">
+            + New Sale
+        </a>
     </div>
-</div>
 
-<div class="panel-card mb-5">
-    <div class="panel-header">
-        <h5 class="mb-0 fw-bold text-dark" style="font-size: 1.1rem;">Client Base</h5>
+    <div class="enterprise-card mb-4">
         
-        <form method="GET" action="/billing/customers" class="compact-search w-100 w-md-auto">
-            <input type="text" name="search" placeholder="Search name or phone..." value="{{ search_query or '' }}">
-            <button type="submit">Search</button>
-            {% if search_query %}
-                <a href="/billing/customers" class="btn btn-sm d-flex align-items-center justify-content-center px-2 ms-1 text-muted text-decoration-none fw-bold">✕</a>
-            {% endif %}
-        </form>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="table crm-table">
-            <thead>
-                <tr>
-                    <th>Customer Identity</th>
-                    <th class="text-center">Total Visits</th>
-                    <th class="text-end">Lifetime Value (LTV)</th>
-                    <th class="text-end">Last Visit</th>
-                    <th class="text-center">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for customer, total_visits, lifetime_value, last_visit in pagination.items %}
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-circle">{{ customer.name[0]|upper }}</div>
-                            <div>
-                                <strong class="text-dark" style="font-size: 1.05rem;">{{ customer.name }}</strong>
-                                {% if lifetime_value > 10000 or total_visits > 3 %}
-                                    <span class="badge-vip">VIP</span>
-                                {% endif %}
-                                <br>
-                                <small class="text-muted fw-medium">+91 {{ customer.phone_number }}</small>
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <h6 class="mb-0 fw-bold text-dark">All Customers</h6>
+            
+            <form method="GET" action="/billing/customers" class="w-100" style="max-width: 400px;">
+                <div class="search-input-group">
+                    <span class="ps-2 text-muted">🔍</span>
+                    <input type="text" name="search" placeholder="Search by name or phone number..." value="{{ search_query or '' }}">
+                    {% if search_query %}
+                        <a href="/billing/customers" class="text-muted text-decoration-none px-2 text-xs fw-bold">CLEAR</a>
+                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-dark px-3 rounded-2" style="background: var(--brand-sage); border: none;">Search</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Customer Identity</th>
+                        <th class="text-center">Total Visits</th>
+                        <th class="text-end">Lifetime Value (LTV)</th>
+                        <th class="text-end">Last Visit</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer, total_visits, lifetime_value, last_visit in pagination.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar-circle">{{ customer.name[0]|upper }}</div>
+                                <div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold text-dark" style="font-size: 0.95rem;">{{ customer.name }}</span>
+                                        {% if lifetime_value > 10000 or total_visits > 3 %}
+                                            <span class="badge-vip">VIP</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-muted text-xs mt-1">📞 +91 {{ customer.phone_number }}</div>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td class="text-center">
-                        <span style="background: #F8F5F1; color: var(--color-taupe); padding: 4px 12px; border-radius: 50px; font-weight: 700; border: 1px solid var(--color-sand);">
-                            {{ total_visits }}
-                        </span>
-                    </td>
-                    <td class="text-end ltv-text">
-                        ₹{{ "%.2f"|format(lifetime_value) }}
-                    </td>
-                    <td class="text-end">
-                        <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;">{{ last_visit.strftime('%b %d, %Y') }}</div>
-                        <small class="text-muted">{{ last_visit.strftime('%I:%M %p') }}</small>
-                    </td>
-                    <td class="text-center">
-                        <a href="/billing/history?search={{ customer.phone_number }}" class="btn btn-sm text-sage fw-bold" style="background: rgba(102, 121, 107, 0.1); border-radius: 6px; padding: 6px 12px;">
-                            View Bills →
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="text-center py-5 text-muted">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">📭</div>
-                        {% if search_query %}
-                            <h5 class="fw-bold text-taupe">No Customers Found</h5>
-                            <p class="mb-0">Try a different name or phone number.</p>
-                        {% else %}
-                            <h5 class="fw-bold text-taupe">Your CRM is Empty</h5>
-                            <p class="mb-0">Start generating bills in the POS to build your client directory.</p>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    {% if pagination.pages > 1 %}
-    <div class="p-3 bg-white d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(212, 194, 173, 0.3);">
-        <small class="text-muted fw-medium ms-2">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
-        <nav>
-            <ul class="pagination pagination-sm mb-0 gap-1 me-2">
+                        </td>
+                        
+                        <td class="text-center">
+                            <span class="badge-count">{{ total_visits }}</span>
+                        </td>
+                        
+                        <td class="text-end">
+                            <div class="amount-display">₹{{ "%.2f"|format(lifetime_value) }}</div>
+                        </td>
+                        
+                        <td class="text-end">
+                            <div class="text-dark text-sm fw-medium">{{ last_visit.strftime('%b %d, %Y') }}</div>
+                            <div class="text-muted text-xs">{{ last_visit.strftime('%I:%M %p') }}</div>
+                        </td>
+                        
+                        <td class="text-end">
+                            <a href="/billing/history?search={{ customer.phone_number }}" class="btn-view-bills">
+                                View Bills <span aria-hidden="true">→</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div class="fs-1 mb-2 opacity-50">📭</div>
+                            {% if search_query %}
+                                <h6 class="fw-bold text-dark mb-1">No customers found</h6>
+                                <p class="text-muted text-sm mb-0">Try a different name or phone number.</p>
+                            {% else %}
+                                <h6 class="fw-bold text-dark mb-1">Your CRM is empty</h6>
+                                <p class="text-muted text-sm mb-0">Start generating bills in the POS to build your client directory.</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if pagination.pages > 1 %}
+        <div class="p-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 bg-light">
+            <span class="text-muted text-sm">Showing page <b>{{ pagination.page }}</b> of <b>{{ pagination.pages }}</b></span>
+            <div class="btn-group shadow-sm">
                 {% if pagination.has_prev %}
-                <li class="page-item">
-                    <a class="page-link text-sage border-0 bg-light rounded-3 px-3" href="{{ url_for('billing.customers_directory', page=pagination.prev_num, search=search_query) }}">← Prev</a>
-                </li>
+                    <a class="btn btn-sm btn-white border bg-white text-dark fw-medium" href="{{ url_for('billing.customers_directory', page=pagination.prev_num, search=search_query) }}">Previous</a>
                 {% endif %}
-                
                 {% if pagination.has_next %}
-                <li class="page-item">
-                    <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold" href="{{ url_for('billing.customers_directory', page=pagination.next_num, search=search_query) }}">Next →</a>
-                </li>
+                    <a class="btn btn-sm btn-dark fw-medium" href="{{ url_for('billing.customers_directory', page=pagination.next_num, search=search_query) }}" style="background: var(--brand-sage); border: none;">Next</a>
                 {% endif %}
-            </ul>
-        </nav>
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock %}

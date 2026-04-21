@@ -2,83 +2,214 @@
 
 {% block content %}
 <style>
-    .history-header { color: var(--color-sage); font-weight: 700; letter-spacing: -0.5px; }
-    
-    /* Search Bar Styling */
-    .search-wrapper-history { display: flex; gap: 8px; }
-    .search-input-custom { border: 1px solid var(--color-sand); border-radius: 8px; padding: 8px 16px; background-color: #F8F5F1; font-weight: 500; }
-    .search-input-custom:focus { background-color: #fff; border-color: var(--color-sage); outline: none; }
-    
-    /* Data Table Styling */
-    .table-history { width: 100%; margin-bottom: 0; }
-    .table-history th { 
-        background-color: #F8F5F1; 
-        color: var(--color-sage); 
-        font-size: 0.85rem; 
-        text-transform: uppercase; 
-        padding: 1rem 1.5rem; 
-        border-bottom: 2px solid var(--color-sand); 
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-    .table-history td { 
-        padding: 1.25rem 1.5rem; 
-        border-bottom: 1px solid rgba(212, 194, 173, 0.3); 
-        vertical-align: middle; 
-        transition: background-color 0.2s ease;
-    }
-    .table-history tbody tr:hover td {
-        background-color: rgba(239, 223, 204, 0.15); /* Soft cream hover */
+    /* --- Enterprise Typography & Colors --- */
+    :root {
+        --brand-sage: #66796b;
+        --brand-sage-light: #f0fdf4;
+        --brand-taupe: #8c837a;
+        --text-dark: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+        --bg-surface: #ffffff;
+        --bg-body: #f9fafb;
     }
 
-    /* Badges & Accents */
-    .inv-badge {
-        background-color: var(--color-cream);
-        color: var(--color-taupe);
-        border: 1px solid var(--color-sand);
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.85rem;
+    .page-title { color: var(--text-dark); font-weight: 800; letter-spacing: -0.02em; font-size: 1.5rem; }
+    
+    /* --- Surface & Cards --- */
+    .enterprise-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
     }
-    .amount-text { color: var(--color-sage); font-weight: 700; font-size: 1.1rem; }
+
+    /* --- Search Bar --- */
+    .search-input-group {
+        display: flex;
+        align-items: center;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.25rem 0.5rem;
+        transition: all 0.2s;
+    }
+    .search-input-group:focus-within {
+        background: var(--bg-surface);
+        border-color: var(--brand-sage);
+        box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.1);
+    }
+    .search-input-group input {
+        border: none;
+        background: transparent;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        width: 100%;
+        outline: none;
+        color: var(--text-dark);
+    }
+    .search-input-group input::placeholder { color: #9ca3af; }
+
+    /* --- Enterprise Table --- */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-pro {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: collapse;
+    }
+    .table-pro th {
+        background-color: var(--bg-body);
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+    .table-pro td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-dark);
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+    .table-pro tbody tr { transition: background-color 0.15s ease; }
+    .table-pro tbody tr:hover { background-color: #f8fafc; }
+
+    /* --- Cell Formatting --- */
+    .fw-medium { font-weight: 500; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    
+    .invoice-id {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        color: var(--brand-sage);
+        font-weight: 600;
+    }
+
+    /* --- Soft Badges --- */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+    .badge-paid { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-pending { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    /* --- Switches & Selects --- */
+    .form-switch .form-check-input {
+        width: 2.25em;
+        height: 1.15em;
+        cursor: pointer;
+        border-color: #cbd5e1;
+    }
+    .form-switch .form-check-input:checked {
+        background-color: var(--brand-sage);
+        border-color: var(--brand-sage);
+    }
+    .pro-select {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 2px 4px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .pro-select:hover, .pro-select:focus {
+        background: var(--bg-body);
+        border-color: var(--border-color);
+        outline: none;
+    }
+
+    /* --- Action Dropdown (The ⋮ Menu) --- */
+    .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        color: var(--text-muted);
+        background: transparent;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-icon:hover {
+        background: var(--bg-body);
+        color: var(--text-dark);
+        border-color: var(--border-color);
+    }
+    .dropdown-menu-pro {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item-pro {
+        border-radius: 4px;
+        padding: 0.4rem 0.75rem;
+        color: var(--text-dark);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .dropdown-item-pro:hover { background-color: var(--bg-body); }
+    .dropdown-item-danger:hover { background-color: #fef2f2; color: #dc2626; }
 </style>
 
-<div class="row mt-4 mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-            <span class="fs-3 me-2 text-taupe">📑</span>
-            <h2 class="history-header mb-0">Invoice History</h2>
-        </div>
-        <a href="/billing" class="btn btn-terracotta fw-bold px-4 py-2 shadow-sm">+ Create New Bill</a>
-    </div>
-</div>
-
-<div class="card card-glass border-0 shadow-sm">
-    <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0 text-sage fw-bold">Past Transactions</h5>
-        
-        <form method="GET" action="/billing/history" class="search-wrapper-history w-100 w-md-75 w-lg-50">
-            <input type="text" name="search" class="form-control search-input-custom flex-grow-1" 
-                   placeholder="Search by Invoice ID, Customer Name, or Phone..." 
-                   value="{{ search_query or '' }}">
-            <button type="submit" class="btn btn-sage px-4 fw-bold rounded-3">Search</button>
-            {% if search_query %}
-                <a href="/billing/history" class="btn btn-outline-taupe px-3 rounded-3 d-flex align-items-center">Clear</a>
-            {% endif %}
-        </form>
-    </div>
+<div class="container-fluid py-4">
     
-    <div class="card-body p-0">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-1">Invoices</h1>
+            <p class="text-muted text-sm mb-0">Manage your billing history and transactions.</p>
+        </div>
+        <a href="/billing" class="btn btn-dark fw-medium px-4 py-2 rounded-3 shadow-sm text-nowrap" style="background-color: var(--brand-sage); border: none;">
+            + Create Invoice
+        </a>
+    </div>
+
+    <div class="enterprise-card mb-4">
+        
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <h6 class="mb-0 fw-bold text-dark">All Invoices</h6>
+            
+            <form method="GET" action="/billing/history" class="w-100" style="max-width: 400px;">
+                <div class="search-input-group">
+                    <span class="ps-2 text-muted">🔍</span>
+                    <input type="text" name="search" placeholder="Search invoices, customers..." value="{{ search_query or '' }}">
+                    {% if search_query %}
+                        <a href="/billing/history" class="text-muted text-decoration-none px-2 text-xs fw-bold">CLEAR</a>
+                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-dark px-3 rounded-2" style="background: var(--brand-sage); border: none;">Search</button>
+                </div>
+            </form>
+        </div>
+        
         <div class="table-responsive">
-            <table class="table table-history">
+            <table class="table-pro">
                 <thead>
                     <tr>
-                        <th>Invoice No.</th>
-                        <th>Date & Time</th>
-                        <th>Customer Details</th>
-                        <th>Total Amount</th>
-                        <th>Payment Status</th>
+                        <th>Invoice</th>
+                        <th>Amount</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -86,33 +217,37 @@
                     {% for inv in pagination.items %}
                     <tr>
                         <td>
-                            <span class="inv-badge">{{ inv.invoice_number }}</span>
-                        </td>
-                        <td>
-                            <div class="fw-bold text-dark">{{ inv.created_at.strftime('%d %b %Y') }}</div>
-                            <small class="text-muted fw-medium">{{ inv.created_at.strftime('%I:%M %p') }}</small>
-                        </td>
-                        <td>
-                            <strong style="color: var(--color-sage);">{{ inv.customer.name }}</strong><br>
-                            <small class="text-muted fw-medium">+91 {{ inv.customer.phone_number }}</small>
-                        </td>
-                        <td class="amount-text">
-                            ₹{{ "%.2f"|format(inv.grand_total) }}
+                            <div class="invoice-id">{{ inv.invoice_number }}</div>
                         </td>
                         
                         <td>
-                            <div class="d-flex flex-column gap-2">
-                                <div class="form-check form-switch m-0 d-flex align-items-center">
-                                    <input class="form-check-input payment-toggle shadow-sm mt-0" type="checkbox" data-id="{{ inv.id }}" {% if inv.is_paid %}checked{% endif %} style="cursor: pointer;">
-                                    <label class="form-check-label ms-2 small fw-bold">
+                            <div class="fw-bold text-dark">₹{{ "%.2f"|format(inv.grand_total) }}</div>
+                            <div class="text-muted text-xs">Total</div>
+                        </td>
+
+                        <td>
+                            <div class="fw-medium text-dark">{{ inv.customer.name }}</div>
+                            <div class="text-muted text-xs">{{ inv.customer.phone_number }}</div>
+                        </td>
+                        
+                        <td>
+                            <div class="text-dark text-sm">{{ inv.created_at.strftime('%b %d, %Y') }}</div>
+                            <div class="text-muted text-xs">{{ inv.created_at.strftime('%I:%M %p') }}</div>
+                        </td>
+                        
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between gap-3">
+                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                    <input class="form-check-input payment-toggle m-0 me-2 shadow-none" type="checkbox" data-id="{{ inv.id }}" {% if inv.is_paid %}checked{% endif %}>
+                                    <span class="status-label-wrapper">
                                         {% if inv.is_paid %}
-                                            <span class="text-sage">Paid</span>
+                                            <span class="status-badge badge-paid">Paid</span>
                                         {% else %}
-                                            <span class="text-terracotta">Pending</span>
+                                            <span class="status-badge badge-pending">Pending</span>
                                         {% endif %}
-                                    </label>
+                                    </span>
                                 </div>
-                                <select class="form-select form-select-sm payment-method-select" data-id="{{ inv.id }}" style="font-size: 0.75rem; {% if not inv.is_paid %}display: none;{% endif %}">
+                                <select class="pro-select payment-method-select" data-id="{{ inv.id }}" {% if not inv.is_paid %}style="display: none;"{% endif %}>
                                     <option value="Cash" {% if inv.payment_method == 'Cash' %}selected{% endif %}>Cash</option>
                                     <option value="Card" {% if inv.payment_method == 'Card' %}selected{% endif %}>Card</option>
                                     <option value="UPI" {% if inv.payment_method == 'UPI' %}selected{% endif %}>UPI</option>
@@ -122,19 +257,43 @@
                         </td>
 
                         <td class="text-end">
-                            <a href="/billing/invoice/{{ inv.id }}" class="btn btn-sm btn-outline-taupe px-3 fw-bold rounded-3">View PDF</a>
+                            <div class="dropdown">
+                                <button class="btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    ⋮
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-pro shadow-sm">
+                                    <li>
+                                        <a class="dropdown-item dropdown-item-pro" href="/billing/edit/{{ inv.id }}">
+                                            <span>✏️</span> Edit Invoice
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item dropdown-item-pro" href="/billing/invoice/{{ inv.id }}">
+                                            <span>📄</span> View / Print PDF
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <form action="/billing/delete/{{ inv.id }}" method="POST" class="m-0" onsubmit="return confirm('⚠️ Are you sure you want to delete Invoice {{ inv.invoice_number }}?');">
+                                            <button type="submit" class="dropdown-item dropdown-item-pro dropdown-item-danger w-100 text-start bg-transparent border-0">
+                                                <span>🗑️</span> Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
-                            <div class="fs-1 mb-3">📭</div>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="fs-1 mb-2 opacity-50">📭</div>
                             {% if search_query %}
-                                <h5 class="fw-bold text-taupe">No Invoices Found</h5>
-                                <p class="mb-0">Try adjusting your search terms.</p>
+                                <h6 class="fw-bold text-dark mb-1">No matching invoices</h6>
+                                <p class="text-muted text-sm mb-0">Try checking for typos or clear your search.</p>
                             {% else %}
-                                <h5 class="fw-bold text-taupe">No History Yet</h5>
-                                <p class="mb-0">You haven't generated any invoices yet.</p>
+                                <h6 class="fw-bold text-dark mb-1">No invoices yet</h6>
+                                <p class="text-muted text-sm mb-0">Create your first invoice to see it here.</p>
                             {% endif %}
                         </td>
                     </tr>
@@ -142,65 +301,61 @@
                 </tbody>
             </table>
         </div>
-    </div>
-    
-    {% if pagination.pages > 1 %}
-    <div class="card-footer bg-white border-top-0 py-3 px-4 rounded-bottom-4 d-flex justify-content-between align-items-center">
-        <small class="text-muted fw-medium">Showing page {{ pagination.page }} of {{ pagination.pages }}</small>
-        <nav>
-            <ul class="pagination pagination-sm mb-0 gap-1">
+        
+        {% if pagination.pages > 1 %}
+        <div class="p-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 bg-light">
+            <span class="text-muted text-sm">Showing page <b>{{ pagination.page }}</b> of <b>{{ pagination.pages }}</b></span>
+            <div class="btn-group shadow-sm">
                 {% if pagination.has_prev %}
-                <li class="page-item">
-                    <a class="page-link text-sage border-0 bg-light rounded-3 px-3" href="{{ url_for('billing.history', page=pagination.prev_num, search=search_query) }}">← Prev</a>
-                </li>
+                    <a class="btn btn-sm btn-white border bg-white text-dark fw-medium" href="{{ url_for('billing.history', page=pagination.prev_num, search=search_query) }}">Previous</a>
                 {% endif %}
-                
                 {% if pagination.has_next %}
-                <li class="page-item">
-                    <a class="page-link text-sage border-0 bg-light rounded-3 px-3 fw-bold" href="{{ url_for('billing.history', page=pagination.next_num, search=search_query) }}">Next →</a>
-                </li>
+                    <a class="btn btn-sm btn-dark fw-medium" href="{{ url_for('billing.history', page=pagination.next_num, search=search_query) }}" style="background: var(--brand-sage); border: none;">Next</a>
                 {% endif %}
-            </ul>
-        </nav>
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <script>
-function updatePaymentStatus(id, isPaid, method) {
-    fetch(`/billing/api/update_payment/${id}`, {
+function updateInvoiceMeta(id, payload) {
+    fetch(`/billing/api/update_invoice_meta/${id}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ is_paid: isPaid, payment_method: method })
+        body: JSON.stringify(payload)
     }).then(res => {
-        if(!res.ok) alert("Failed to update status. Please try again.");
-    }).catch(err => {
-        console.error("Error updating payment status:", err);
-        alert("Network error. Please try again.");
-    });
+        if(!res.ok) alert("Failed to save changes. Please try again.");
+    }).catch(err => console.error("Error:", err));
 }
 
+// Handle Status Toggles
 document.querySelectorAll('.payment-toggle').forEach(toggle => {
     toggle.addEventListener('change', function() {
         const invoiceId = this.getAttribute('data-id');
         const isPaid = this.checked;
-        const label = this.nextElementSibling;
-        const methodSelect = this.closest('td').querySelector('.payment-method-select');
+        const wrapper = this.closest('td');
+        const labelWrapper = wrapper.querySelector('.status-label-wrapper');
+        const methodSelect = wrapper.querySelector('.payment-method-select');
         
-        // Optimistically update UI
-        label.innerHTML = isPaid ? '<span class="text-sage">Paid</span>' : '<span class="text-terracotta">Pending</span>';
-        methodSelect.style.display = isPaid ? 'block' : 'none';
+        if (isPaid) {
+            labelWrapper.innerHTML = '<span class="status-badge badge-paid">Paid</span>';
+            methodSelect.style.display = 'inline-block';
+        } else {
+            labelWrapper.innerHTML = '<span class="status-badge badge-pending">Pending</span>';
+            methodSelect.style.display = 'none';
+        }
 
-        updatePaymentStatus(invoiceId, isPaid, methodSelect.value);
+        updateInvoiceMeta(invoiceId, { is_paid: isPaid, payment_method: methodSelect.value });
     });
 });
 
+// Handle Dropdown Updates
 document.querySelectorAll('.payment-method-select').forEach(select => {
     select.addEventListener('change', function() {
         const invoiceId = this.getAttribute('data-id');
         const toggle = this.closest('td').querySelector('.payment-toggle');
-        
-        updatePaymentStatus(invoiceId, toggle.checked, this.value);
+        updateInvoiceMeta(invoiceId, { is_paid: toggle.checked, payment_method: this.value });
     });
 });
 </script>
