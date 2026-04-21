@@ -5,264 +5,345 @@
     <title>Invoice - {{ invoice.invoice_number }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* --- CORE PRINT & RESET --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        
         body {
-            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-            color: #333;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 30px;
-            font-size: 14px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            font-size: 11px;
+            line-height: 1.4;
+            padding: 20px;
         }
-        
-        .action-buttons { max-width: 800px; margin: 0 auto 20px auto; text-align: right; }
-        .btn {
-            padding: 10px 20px; margin-left: 10px; border: none; border-radius: 5px;
-            cursor: pointer; font-weight: bold; color: white; font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; text-decoration: none;
-        }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-print { background-color: #34495e; }
-        .btn-download { background-color: #e74c3c; }
-        .btn-whatsapp { background-color: #25D366; }
-        .btn-secondary { background-color: #95a5a6; }
 
+        /* --- UI BUTTONS --- */
+        .action-buttons { max-width: 794px; margin: 0 auto 15px auto; display: flex; gap: 10px; justify-content: flex-end; }
+        .btn { padding: 9px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white; font-size: 12px; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        .btn-print { background: linear-gradient(135deg, #111827 0%, #374151 100%); }
+        .btn-whatsapp { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        .btn-secondary { background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%); }
+
+        /* --- INVOICE CANVAS --- */
         .invoice-box {
-            background-color: #fff; max-width: 800px; margin: auto; padding: 40px;
-            border-radius: 8px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            position: relative; /* 🎯 NEEDED FOR WATERMARK */
-            overflow: hidden;   /* 🎯 Keeps watermark strictly inside the white box */
+            max-width: 794px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-top: 10px solid #111827;
+            border-radius: 8px;
+            padding: 40px; /* Standardized padding */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- 🎯 THE BULLETPROOF PDF EXPORT OVERRIDES --- */
+        table.items tr, 
+        .summary-section, 
+        .header-section, 
+        .bill-to-section {
+            page-break-inside: avoid !important;
+        }
+
+        .pdf-export-mode {
+            /* We force min-width so the canvas clone CANNOT be squished by a narrow viewport */
+            width: 794px !important;
+            min-width: 794px !important;
+            max-width: 794px !important;
+            padding: 40px !important; 
+            margin: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+
+        /* --- WATERMARK --- */
+        .watermark {
+            position: absolute; 
+            top: 45%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 150px; 
+            font-weight: 900; 
+            color: rgba(16, 185, 129, 0.12);
+            text-transform: uppercase; 
+            letter-spacing: 20px; 
+            pointer-events: none; 
+            z-index: 3;
+        }
+
+        .content-wrapper { position: relative; z-index: 2; }
+
+        /* --- HEADER & CUSTOMER --- */
+        .header-section { display: flex; justify-content: space-between; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #f3f4f6; }
+        .company-info { max-width: 55%; }
+        .company-logo { max-height: 55px; max-width: 160px; margin-bottom: 10px; object-fit: contain; }
+        .company-name { font-size: 20px; font-weight: 900; color: #111827; margin-bottom: 4px; text-transform: uppercase; letter-spacing: -0.5px; }
+        .company-meta { color: #6b7280; font-size: 10px; line-height: 1.5; }
+        .company-meta strong { color: #374151; }
+        
+        .invoice-details { text-align: right; }
+        .invoice-title { font-size: 30px; font-weight: 900; color: #e5e7eb; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+        .meta-table { margin-left: auto; border-collapse: collapse; background: #f9fafb; border-radius: 6px; overflow: hidden; border: 1px solid #f3f4f6; }
+        .meta-table td { padding: 6px 12px; font-size: 10px; border-bottom: 1px solid #f3f4f6; }
+        .meta-table tr:last-child td { border-bottom: none; }
+        .meta-table td:first-child { color: #6b7280; font-weight: 600; text-align: right; text-transform: uppercase; letter-spacing: 0.5px; }
+        .meta-table td:last-child { color: #111827; font-weight: 800; text-align: left; }
+
+        .bill-to-section { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; background: #f9fafb; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+        .bill-to-left h4 { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; }
+        .customer-name { font-size: 16px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+        .customer-phone { font-size: 11px; color: #4b5563; font-weight: 600; background: #ffffff; padding: 4px 10px; border-radius: 20px; border: 1px solid #e5e7eb; }
+
+        /* --- 🎯 STRICT TABLE ARCHITECTURE --- */
+        .table-wrapper { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+        
+        table.items { 
+            width: 100%; 
+            min-width: 714px !important; /* 794px box - 80px padding. Forces strict layout engine */
+            border-collapse: collapse; 
+            table-layout: fixed; 
         }
         
-        /* 🎯 NEW WATERMARK CSS */
-        .watermark-paid {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 160px;
-            color: rgba(128, 128, 128, 0.12); /* Faint Grey Color */
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 20px;
-            z-index: 9999; /* Sits on top of the elements */
-            pointer-events: none; /* Mouse clicks pass right through it */
-            user-select: none; /* Cannot be highlighted */
+        table.items th { 
+            background-color: #111827; color: #ffffff; padding: 10px 8px; 
+            text-align: left; font-size: 10px; font-weight: 600; 
+            text-transform: uppercase; letter-spacing: 0.5px; 
+        }
+        
+        table.items td { 
+            padding: 10px 8px; border-bottom: 1px solid #f3f4f6; 
+            color: #374151; vertical-align: middle; 
+            word-wrap: break-word; 
         }
 
-        .header { width: 100%; display: table; padding-bottom: 20px; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-        .header-left { display: table-cell; text-align: left; vertical-align: top; }
-        .header-right { display: table-cell; text-align: right; vertical-align: top; }
-        .company-name { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
-        .invoice-title { font-size: 28px; font-weight: bold; color: #e74c3c; margin-bottom: 5px; text-transform: uppercase; }
-        .billing-info { width: 100%; display: table; margin-bottom: 30px; }
-        .billed-to { display: table-cell; text-align: left; width: 50%; }
-        table.items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        table.items th, table.items td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        table.items th { background-color: #f8f9fa; font-weight: bold; color: #2c3e50; }
-        table.items td.right, table.items th.right { text-align: right; }
-        .totals-box { width: 100%; display: table; }
-        .totals-space { display: table-cell; width: 60%; }
-        .totals-calc { display: table-cell; width: 40%; }
-        .totals-table { width: 100%; border-collapse: collapse; }
-        .totals-table td { padding: 8px; text-align: right; }
-        .totals-table td.label { font-weight: bold; text-align: left; }
-        .grand-total { font-size: 18px; font-weight: bold; color: #27ae60; border-top: 2px solid #eee; padding-top: 10px !important; }
-        .discount-text { color: #e74c3c; }
-        .footer { margin-top: 50px; text-align: center; color: #7f8c8d; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px; }
+        /* Absolutely forbid the browser from breaking numbers into lines */
+        table.items .right, table.items th.right { 
+            text-align: right; 
+            white-space: nowrap !important; 
+        }
 
+        table.items tbody tr:nth-child(even) { background-color: #fafaf9; }
+        table.items tbody tr:last-child td { border-bottom: none; }
+        
+        .item-name { font-weight: 700; color: #111827; font-size: 11px; }
+        .item-hsn { font-size: 9px; color: #9ca3af; margin-top: 2px; }
+        .strike { text-decoration: line-through; color: #9ca3af; font-size: 9px; }
+        .discount-val { color: #ef4444; font-weight: 700; font-size: 10px; background: #fef2f2; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+        .gst-breakdown { font-size: 9px; color: #6b7280; line-height: 1.3; }
+        .gst-breakdown strong { color: #4b5563; }
+
+        /* --- SUMMARY SECTION --- */
+        .summary-section { display: flex; justify-content: space-between; align-items: flex-start; }
+        
+        .terms { width: 45%; padding-right: 20px; }
+        .terms h5 { font-size: 10px; text-transform: uppercase; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.5px; font-weight: 700; }
+        .terms p { font-size: 9px; color: #6b7280; margin-bottom: 3px; line-height: 1.5; }
+        
+        .totals { width: 50%; }
+        .totals-table { width: 100%; border-collapse: collapse; }
+        .totals-table td { padding: 6px 12px; text-align: right; border-bottom: 1px solid #f3f4f6; }
+        .totals-table td:first-child { color: #4b5563; font-weight: 600; font-size: 10px; text-transform: uppercase; }
+        .totals-table td:last-child { color: #111827; font-weight: 700; font-size: 12px; white-space: nowrap; }
+        
+        .grand-total-row td { background: linear-gradient(135deg, #111827 0%, #374151 100%); color: #ffffff !important; border-bottom: none; }
+        .grand-total-row td:first-child { border-radius: 6px 0 0 6px; font-size: 12px; letter-spacing: 1px; }
+        .grand-total-row td:last-child { border-radius: 0 6px 6px 0; font-size: 16px; font-weight: 900 !important; color: #34d399 !important; }
+
+        .payment-badge { display: inline-block; margin-top: 15px; padding: 6px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; float: right; letter-spacing: 0.5px; }
+        .badge-paid { background-color: #d1fae5; color: #065f46; border: 1px solid #34d399; }
+        .badge-pending { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        .footer { margin-top: 35px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; font-size: 10px; color: #9ca3af; font-weight: 500; }
+        .footer strong { color: #4b5563; }
+
+        /* --- PRINT FIXES --- */
         @media print {
+            body { padding: 0 !important; background: white !important; }
+            .invoice-box { max-width: 100% !important; padding: 25px 30px !important; box-shadow: none !important; border-top-width: 6px !important; border-radius: 0 !important; }
             .no-print { display: none !important; }
-            body { background-color: white; padding: 0; }
-            .invoice-box { box-shadow: none; padding: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="action-buttons no-print">
-    <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
-    <button class="btn btn-download" onclick="downloadPDF()">📄 Download PDF</button>
-    
-    {% if not is_public %}
-        <button class="btn btn-whatsapp" onclick="sendWhatsApp()">💬 Send to WhatsApp</button>
-        <a href="/billing" class="btn btn-secondary">🔙 Back to POS</a>
-    {% endif %}
-</div>
+    <div class="action-buttons no-print">
+        <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
 
-<div class="invoice-box" id="invoice-content">
-    
-    {% if invoice.is_paid %}
-        <div class="watermark-paid">PAID</div>
-    {% endif %}
-
-    <div class="header">
-        <div class="header-left">
-            {% if invoice.company.logo_path %}
-                <img src="{{ url_for('static', filename=invoice.company.logo_path) }}" style="max-height: 80px; margin-bottom: 10px;" alt="Company Logo">
-            {% endif %}
-            <div class="company-name">{{ invoice.company.name }}</div>
-            <div style="white-space: pre-wrap; margin-bottom: 5px;">{{ invoice.company.address }}</div>
-            <div><strong>GSTIN:</strong> {{ invoice.company.gstin }}</div>
-            <div><strong>Email:</strong> {{ invoice.company.email }}</div>
-        </div>
-        <div class="header-right">
-            <div class="invoice-title">Tax Invoice</div>
-            <div><strong>Invoice No:</strong> {{ invoice.invoice_number }}</div>
-            <div><strong>Date:</strong> {{ invoice.created_at.strftime('%d %b %Y') }}</div>
-        </div>
+        {% if not is_public %}
+        <button class="btn btn-whatsapp" onclick="sendWhatsApp()">💬 Send WhatsApp</button>
+        <a href="/billing" class="btn btn-secondary">🔙 POS</a>
+        {% endif %}
     </div>
 
-    <div class="billing-info">
-        <div class="billed-to">
-            <strong>Billed To:</strong><br>
-            <span style="font-size: 16px; font-weight: bold; color: #2c3e50;">{{ invoice.customer.name }}</span><br>
-            Phone: +91 {{ invoice.customer.phone_number }}<br>
-        </div>
-    </div>
+    <div class="invoice-box" id="invoice-content">
+        
+        {% if invoice.is_paid %}
+        <div class="watermark">PAID</div>
+        {% endif %}
 
-    <table class="items">
-        <thead>
-            <tr>
-                <th>Description</th>
-                <th>HSN/SAC</th>
-                <th class="right">Qty</th>
-                <th class="right">MRP (₹)</th>
-                <th class="right">Discount</th>
-                <th class="right">Rate (₹)</th>
-                <th class="right">GST %</th>
-                <th class="right">Amount (₹)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in invoice.items %}
-            <tr>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.product.hsn_code or 'N/A' }}</td>
-                <td class="right">{{ item.quantity }}</td>
-                
-                <td class="right">
-                    {% if item.discount_value > 0 %}
-                        <strike style="color: #95a5a6;">{{ "%.2f"|format(item.base_price_at_purchase) }}</strike>
-                    {% else %}
-                        {{ "%.2f"|format(item.base_price_at_purchase or item.price_at_purchase) }}
-                    {% endif %}
-                </td>
-                
-                <td class="right discount-text">
-                    {% if item.discount_value > 0 %}
-                        - {% if item.discount_type == 'flat' %}₹{{ "%.2f"|format(item.discount_value) }}{% else %}{{ item.discount_value }}%{% endif %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-
-                <td class="right">{{ "%.2f"|format(item.price_at_purchase) }}</td>
-                
-                <td class="right" style="white-space: nowrap;">
-                    {% if invoice.split_gst %}
-                        <div style="font-size: 12px; color: #555;"><strong>CGST:</strong> {{ item.cgst_percentage }}%</div>
-                        <div style="font-size: 12px; color: #555;"><strong>SGST:</strong> {{ item.sgst_percentage }}%</div>
-                    {% else %}
-                        <div><strong>IGST:</strong> {{ item.gst_percentage_at_purchase }}%</div>
-                    {% endif %}
-                </td>
-
-                <td class="right">
-                    {{ "%.2f"|format(item.price_at_purchase * item.quantity) }}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="totals-box">
-        <div class="totals-space">
-            <p><strong>Terms & Conditions:</strong><br>
-            1. All disputes are subject to local jurisdiction.<br>
-            2. Goods once sold will not be taken back.</p>
-        </div>
-        <div class="totals-calc">
-            <table class="totals-table">
-                <tr>
-                    <td class="label">Subtotal (Excl. Tax):</td>
-                    <td>₹{{ "%.2f"|format(invoice.subtotal) }}</td>
-                </tr>
-                {% if invoice.discount_value > 0 %}
-                <tr>
-                    <td class="label discount-text">Cart Discount:</td>
-                    <td class="discount-text">
-                        - {% if invoice.discount_type == 'flat' %}₹{{ "%.2f"|format(invoice.discount_value) }}{% else %}{{ invoice.discount_value }}%{% endif %}
-                    </td>
-                </tr>
-                {% endif %}
-                <tr>
-                    <td class="label">Total Tax (GST):</td>
-                    <td>₹{{ "%.2f"|format(invoice.total_tax) }}</td>
-                </tr>
-                <tr>
-                    <td class="label grand-total">Grand Total:</td>
-                    <td class="grand-total">₹{{ "%.2f"|format(invoice.grand_total) }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Payment Status:</td>
-                    <td>
-                        {% if invoice.is_paid %}
-                            Paid via {{ invoice.payment_method }}
-                        {% else %}
-                            Pending
-                        {% endif %}
-                    </td>
-                </tr>
-            </table>
+        <div class="content-wrapper">
             
+            <div class="header-section">
+                <div class="company-info">
+                    {% if invoice.company.logo_path %}
+                    <img src="{{ url_for('static', filename=invoice.company.logo_path) }}" class="company-logo" alt="Logo">
+                    {% endif %}
+                    <div class="company-name">{{ invoice.company.name }}</div>
+                    <div class="company-meta">
+                        {{ invoice.company.address }}<br>
+                        {% if invoice.company.gstin %}<strong>GSTIN:</strong> {{ invoice.company.gstin }} <span style="color:#d1d5db;">|</span> {% endif %}
+                        <strong>Email:</strong> {{ invoice.company.email }}
+                    </div>
+                </div>
+                
+                <div class="invoice-details">
+                    <div class="invoice-title">INVOICE</div>
+                    <table class="meta-table">
+                        <tr><td>Invoice No</td><td>{{ invoice.invoice_number }}</td></tr>
+                        <tr><td>Issue Date</td><td>{{ invoice.created_at.strftime('%d %b %Y') }}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bill-to-section">
+                <div class="bill-to-left">
+                    <h4>Billed To</h4>
+                    <div class="customer-name">{{ invoice.customer.name }}</div>
+                </div>
+                <div class="customer-phone">
+                    +91 {{ invoice.customer.phone_number }}
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="items">
+                    <thead>
+                        <tr>
+                            <th style="width: 33%;">Item Description</th>
+                            <th class="right" style="width: 7%;">Qty</th>
+                            <th class="right" style="width: 13%;">MRP</th>
+                            <th class="right" style="width: 10%;">Disc.</th>
+                            <th class="right" style="width: 13%;">Rate</th>
+                            <th class="right" style="width: 11%;">GST</th>
+                            <th class="right" style="width: 13%;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items %}
+                        <tr>
+                            <td>
+                                <div class="item-name">{{ item.product.name }}</div>
+                                <div class="item-hsn">HSN/SAC: {{ item.product.hsn_code or 'N/A' }}</div>
+                            </td>
+                            <td class="right fw-bold" style="font-size: 12px; color: #111827;">{{ item.quantity }}</td>
+                            
+                            <td class="right">
+                                {% if item.discount_value > 0 %}
+                                <div class="strike">₹{{ "%.2f"|format(item.base_price_at_purchase) }}</div>
+                                {% else %}
+                                ₹{{ "%.2f"|format(item.base_price_at_purchase or item.price_at_purchase) }}
+                                {% endif %}
+                            </td>
+
+                            <td class="right">
+                                {% if item.discount_value > 0 %}
+                                    <span class="discount-val">-{% if item.discount_type == 'flat' %}₹{{ "%.2f"|format(item.discount_value) }}{% else %}{{ item.discount_value }}%{% endif %}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td class="right fw-bold">₹{{ "%.2f"|format(item.price_at_purchase) }}</td>
+
+                            <td class="right">
+                                {% if invoice.split_gst %}
+                                <div class="gst-breakdown">
+                                    <strong>CGST:</strong> {{ item.cgst_percentage }}%<br>
+                                    <strong>SGST:</strong> {{ item.sgst_percentage }}%
+                                </div>
+                                {% else %}
+                                <div class="gst-breakdown"><strong>IGST:</strong> {{ item.gst_percentage_at_purchase }}%</div>
+                                {% endif %}
+                            </td>
+
+                            <td class="right fw-bold" style="color: #111827; font-size: 12px;">
+                                ₹{{ "%.2f"|format(item.price_at_purchase * item.quantity) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="summary-section">
+                <div class="terms">
+                    <h5>Terms & Conditions</h5>
+                    <p>1. All disputes are subject to local jurisdiction.</p>
+                    <p>2. Goods once sold will not be taken back.</p>
+                    <p>3. This is a computer-generated document. No signature is required.</p>
+                </div>
+
+                <div class="totals">
+                    <table class="totals-table">
+                        <tr>
+                            <td>Subtotal (Excl. Tax)</td>
+                            <td>₹{{ "%.2f"|format(invoice.subtotal) }}</td>
+                        </tr>
+                        {% if invoice.discount_value > 0 %}
+                        <tr>
+                            <td style="color: #dc2626;">Cart Discount</td>
+                            <td style="color: #dc2626;">- {% if invoice.discount_type == 'flat' %}₹{{ "%.2f"|format(invoice.discount_value) }}{% else %}{{ invoice.discount_value }}%{% endif %}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Total Tax (GST)</td>
+                            <td>₹{{ "%.2f"|format(invoice.total_tax) }}</td>
+                        </tr>
+                        <tr class="grand-total-row">
+                            <td>GRAND TOTAL</td>
+                            <td>₹{{ "%.2f"|format(invoice.grand_total) }}</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="clear: both;">
+                        {% if invoice.is_paid %}
+                        <span class="payment-badge badge-paid">Paid via {{ invoice.payment_method }}</span>
+                        {% else %}
+                        <span class="payment-badge badge-pending">Payment Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                Thank you for your business with <strong>{{ invoice.company.name }}</strong>!
+            </div>
         </div>
     </div>
 
-    <div class="footer">
-        Thank you for your business! This is a computer-generated invoice and does not require a physical signature.
-    </div>
-</div>
+    <script>
 
-<script>
-    // 1. Logic for Downloading the PDF directly in the browser (Zero Server Storage)
-    function downloadPDF() {
-        const element = document.getElementById('invoice-content');
-        
-        const opt = {
-            margin:       0.2,
-            filename:     '{{ invoice.invoice_number }}.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 }, 
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        
-        html2pdf().set(opt).from(element).save();
-    }
+        {% if not is_public %}
+        function sendWhatsApp() {
+            let phone = "{{ invoice.customer.phone_number }}".replace(/\D/g, '');
+            if (phone.length === 10) phone = "91" + phone;
 
-    // 2. Logic for Sending the Public Link via WhatsApp
-    {% if not is_public %}
-    function sendWhatsApp() {
-        let phone = "{{ invoice.customer.phone_number }}";
-        phone = phone.replace(/\D/g, ''); 
-        
-        if (phone.length === 10) {
-            phone = "91" + phone; 
+            const name = {{ invoice.customer.name | tojson | safe }};
+            const invNo = {{ invoice.invoice_number | tojson | safe }};
+            const amount = '{{ "%.2f"|format(invoice.grand_total) }}';
+            const companyName = {{ invoice.company.name | tojson | safe }};
+            const invoiceLink = `${window.location.origin}/billing/public/invoice/${invNo}`;
+
+            const rawMessage = `Hello *${name}*,\n\nHere is your invoice *${invNo}* from *${companyName}* for *₹${amount}*.\n\n📄 *Download PDF here:*\n${invoiceLink}\n\nThank you for your business!`;
+            
+            window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(rawMessage)}`, '_blank');
         }
+        {% endif %}
 
-        const name = "{{ invoice.customer.name }}";
-        const invNo = "{{ invoice.invoice_number }}";
-        const amount = '{{ "%.2f"|format(invoice.grand_total) }}';
-        const companyName = "{{ invoice.company.name }}";
-
-        const invoiceLink = `${window.location.origin}/billing/public/invoice/${invNo}`;
-        const rawMessage = `Hello ${name},\n\nThis is an automated message from *${companyName}*.\nYour invoice *${invNo}* for the total amount of *₹${amount}* has been generated.\n\n📄 *Click the secure link below to view and download your PDF Invoice:*\n${invoiceLink}\n\nThank you for your business!`;
-        const encodedMessage = encodeURIComponent(rawMessage);
-
-        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
-        window.open(url, '_blank');
-    }
-    {% endif %}
-</script>
-
+        window.onbeforeprint = function () {
+            document.title = 'Invoice_{{ invoice.invoice_number }}';
+        };
+    </script>
 </body>
 </html>
