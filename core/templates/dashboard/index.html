@@ -3,265 +3,730 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    /* --- CSS Variables & Core Layout --- */
+    /* --- Enhanced Color Palette from Image --- */
     :root {
-        --dash-bg: #f3f4f6;
-        --card-bg: #ffffff;
-        --accent-glow: rgba(102, 121, 107, 0.4);
-        --hero-grad: linear-gradient(135deg, #2b3931 0%, var(--color-sage) 100%);
+        --sage-primary: #647971;      /* Main sage green from image */
+        --sage-light: #7a9087;        /* Lighter sage */
+        --sage-dark: #4a5c54;         /* Darker sage */
+        --beige-warm: #E8DDD3;        /* Warm beige from image */
+        --cream-soft: #F5F3F0;        /* Soft cream from image */
+        --cream-bright: #FDFCFB;      /* Brightest cream */
+        --text-primary: #2C3531;      /* Dark text */
+        --text-secondary: #6B7774;    /* Muted text */
+        
+        /* Gradients */
+        --gradient-sage: linear-gradient(135deg, var(--sage-primary) 0%, var(--sage-dark) 100%);
+        --gradient-warm: linear-gradient(135deg, var(--beige-warm) 0%, var(--cream-soft) 100%);
+        --gradient-glow: linear-gradient(135deg, rgba(100, 121, 113, 0.1) 0%, rgba(232, 221, 211, 0.1) 100%);
     }
 
+    /* --- Global Styles --- */
+    body {
+        background: var(--cream-bright);
+    }
+
+    /* --- Premium Card System --- */
     .kpi-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.75rem;
+        margin-bottom: 2.5rem;
     }
 
-    /* --- Premium Cards --- */
     .glass-card {
-        background: var(--card-bg);
-        border-radius: 20px;
-        border: 1px solid rgba(0,0,0,0.04);
-        padding: 1.5rem;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+        background: #FFFFFF;
+        border-radius: 24px;
+        border: 2px solid var(--cream-soft);
+        padding: 2rem;
+        box-shadow: 
+            0 4px 20px rgba(100, 121, 113, 0.08),
+            0 1px 3px rgba(0, 0, 0, 0.05);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         position: relative;
         overflow: hidden;
     }
-    .glass-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 20px 40px -10px rgba(102, 121, 107, 0.15);
-    }
-    
-    /* Subtle background accent in cards */
+
     .glass-card::before {
-        content: ''; position: absolute; top: -50px; right: -50px; width: 100px; height: 100px;
-        background: radial-gradient(circle, rgba(215, 161, 132, 0.1) 0%, transparent 70%);
-        border-radius: 50%; transition: transform 0.5s ease;
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-sage);
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
-    .glass-card:hover::before { transform: scale(1.5); }
 
+    .glass-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        border-color: var(--sage-light);
+        box-shadow: 
+            0 12px 40px rgba(100, 121, 113, 0.15),
+            0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .glass-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Hero Card - Featured Metric */
     .hero-card {
-        background: var(--hero-grad);
-        color: white;
-        box-shadow: 0 15px 35px -10px var(--accent-glow);
+        background: var(--gradient-sage);
+        border: 2px solid var(--sage-dark);
+        box-shadow: 
+            0 8px 30px rgba(100, 121, 113, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        grid-column: span 1;
     }
-    .hero-card::before { background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
 
-    /* --- Typography --- */
-    .kpi-title { font-size: 0.8rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
-    .hero-card .kpi-title { color: rgba(255,255,255,0.7); }
-    
-    .kpi-value { font-size: 2.2rem; font-weight: 900; color: #111; letter-spacing: -1px; line-height: 1.2; }
-    .hero-card .kpi-value { color: #fff; }
+    .hero-card::before {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+        height: 100%;
+        opacity: 1;
+    }
 
-    .kpi-trend { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 8px; margin-top: 8px; }
-    .trend-up { background: #E8F5E9; color: #2E7D32; }
-    .trend-neutral { background: #F3F4F6; color: #6B7280; }
+    .hero-card:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 
+            0 16px 50px rgba(100, 121, 113, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+    }
 
-    /* --- Glowing Status Indicators --- */
-    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: 700; background: #fff; border: 1px solid #eaeaea; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
-    .dot-paid { background: #10B981; color: #10B981; }
-    .dot-pending { background: #EF4444; color: #EF4444; }
+    /* Accent Cards */
+    .accent-card {
+        background: linear-gradient(135deg, #FFFFFF 0%, var(--cream-soft) 100%);
+        border: 2px solid var(--beige-warm);
+    }
 
-    /* --- Modern Table --- */
-    .adv-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-    .adv-table th { padding: 0 1.5rem 10px 1.5rem; font-size: 0.75rem; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f3f4f6; }
-    .adv-table td { padding: 1.25rem 1.5rem; background: #fff; border-top: 1px solid #f9f9f9; border-bottom: 1px solid #f9f9f9; vertical-align: middle; transition: all 0.2s; }
-    .adv-table tr td:first-child { border-left: 1px solid #f9f9f9; border-radius: 12px 0 0 12px; }
-    .adv-table tr td:last-child { border-right: 1px solid #f9f9f9; border-radius: 0 12px 12px 0; }
-    .adv-table tbody tr { box-shadow: 0 2px 10px rgba(0,0,0,0.01); }
-    .adv-table tbody tr:hover td { background: #fdfaf7; transform: scale(1.005); cursor: pointer; }
+    /* --- Typography Enhancements --- */
+    .kpi-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-    /* --- Action Buttons --- */
-    .btn-gradient { background: linear-gradient(135deg, var(--color-sage) 0%, #4a5c50 100%); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 121, 107, 0.3); transition: all 0.3s; }
-    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 121, 107, 0.4); color: white; }
+    .hero-card .kpi-title {
+        color: rgba(255, 255, 255, 0.85);
+    }
 
-    .chart-box { height: 320px; width: 100%; position: relative; }
+    .kpi-value {
+        font-size: 2.75rem;
+        font-weight: 900;
+        color: var(--text-primary);
+        letter-spacing: -2px;
+        line-height: 1;
+        margin-bottom: 1rem;
+        font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    }
+
+    .hero-card .kpi-value {
+        color: #FFFFFF;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Trend Indicators */
+    .kpi-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 12px;
+        margin-top: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .trend-up {
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        color: #2E7D32;
+        border: 1px solid #A5D6A7;
+    }
+
+    .trend-neutral {
+        background: var(--cream-soft);
+        color: var(--text-secondary);
+        border: 1px solid var(--beige-warm);
+    }
+
+    .hero-card .kpi-trend {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    /* --- Metric Icons --- */
+    .metric-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        background: var(--gradient-warm);
+        box-shadow: 0 4px 12px rgba(100, 121, 113, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .glass-card:hover .metric-icon-wrapper {
+        transform: rotate(10deg) scale(1.1);
+    }
+
+    /* --- Header Section --- */
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--cream-bright) 0%, var(--cream-soft) 100%);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 2px solid var(--beige-warm);
+    }
+
+    .dashboard-title {
+        color: var(--text-primary);
+        letter-spacing: -1.5px;
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
+    }
+
+    /* --- Date Filter Enhancement --- */
+    .date-filter-box {
+        background: #FFFFFF;
+        border: 2px solid var(--cream-soft);
+        border-radius: 16px;
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 
+            0 4px 15px rgba(100, 121, 113, 0.08),
+            0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .date-filter-box:hover {
+        border-color: var(--sage-light);
+        box-shadow: 
+            0 6px 20px rgba(100, 121, 113, 0.12),
+            0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .date-label {
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+
+    .date-input {
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        color: var(--sage-primary);
+        outline: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        padding: 0.25rem;
+    }
+
+    .date-input:focus {
+        color: var(--sage-dark);
+    }
+
+    /* --- Button Styles --- */
+    .btn-apply {
+        background: var(--gradient-sage);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 800;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(100, 121, 113, 0.25);
+        letter-spacing: 0.5px;
+    }
+
+    .btn-apply:hover {
+        background: var(--sage-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(100, 121, 113, 0.35);
+    }
+
+    .btn-gradient {
+        background: var(--gradient-sage);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.75rem;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 15px rgba(100, 121, 113, 0.3);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-gradient:hover {
+        background: var(--sage-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(100, 121, 113, 0.4);
+        color: white;
+    }
+
+    /* --- Status Badges --- */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        background: var(--cream-soft);
+        border: 2px solid var(--beige-warm);
+        transition: all 0.3s ease;
+    }
+
+    .status-badge:hover {
+        transform: scale(1.05);
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        box-shadow: 0 0 12px currentColor;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+
+    .dot-paid {
+        background: #10B981;
+        color: #10B981;
+    }
+
+    .dot-pending {
+        background: #EF4444;
+        color: #EF4444;
+    }
+
+    /* --- Enhanced Table --- */
+    .table-container {
+        background: #FFFFFF;
+        border-radius: 24px;
+        padding: 2rem;
+        border: 2px solid var(--cream-soft);
+        box-shadow: 0 4px 20px rgba(100, 121, 113, 0.08);
+    }
+
+    .adv-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+
+    .adv-table th {
+        padding: 0 1.5rem 16px 1.5rem;
+        font-size: 0.7rem;
+        font-weight: 900;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        border-bottom: 3px solid var(--cream-soft);
+        background: var(--cream-bright);
+    }
+
+    .adv-table td {
+        padding: 1.5rem 1.5rem;
+        background: #FFFFFF;
+        border-top: 2px solid var(--cream-soft);
+        border-bottom: 2px solid var(--cream-soft);
+        vertical-align: middle;
+        transition: all 0.3s ease;
+    }
+
+    .adv-table tr td:first-child {
+        border-left: 2px solid var(--cream-soft);
+        border-radius: 16px 0 0 16px;
+    }
+
+    .adv-table tr td:last-child {
+        border-right: 2px solid var(--cream-soft);
+        border-radius: 0 16px 16px 0;
+    }
+
+    .adv-table tbody tr {
+        box-shadow: 0 2px 8px rgba(100, 121, 113, 0.04);
+        transition: all 0.3s ease;
+    }
+
+    .adv-table tbody tr:hover {
+        transform: translateX(8px);
+        cursor: pointer;
+    }
+
+    .adv-table tbody tr:hover td {
+        background: var(--cream-soft);
+        border-color: var(--beige-warm);
+    }
+
+    /* --- Chart Containers --- */
+    .chart-card {
+        background: #FFFFFF;
+        border-radius: 24px;
+        border: 2px solid var(--cream-soft);
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(100, 121, 113, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .chart-card:hover {
+        border-color: var(--sage-light);
+        box-shadow: 0 8px 30px rgba(100, 121, 113, 0.12);
+    }
+
+    .chart-header {
+        background: var(--gradient-warm);
+        padding: 1.75rem 2rem;
+        border-bottom: 2px solid var(--beige-warm);
+    }
+
+    .chart-title {
+        font-weight: 900;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        letter-spacing: -0.5px;
+    }
+
+    .chart-box {
+        height: 340px;
+        width: 100%;
+        position: relative;
+        padding: 2rem;
+    }
+
+    /* --- Badge Styles --- */
+    .date-range-badge {
+        background: rgba(100, 121, 113, 0.1);
+        color: var(--sage-dark);
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        border: 2px solid var(--sage-light);
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Empty State --- */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--gradient-warm);
+        border-radius: 20px;
+        border: 2px dashed var(--beige-warm);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        opacity: 0.6;
+        margin-bottom: 1rem;
+    }
+
+    .empty-title {
+        font-weight: 900;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-text {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* --- Responsive Adjustments --- */
+    @media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .hero-card {
+            grid-column: span 1;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+        }
+
+        .kpi-value {
+            font-size: 2.25rem;
+        }
+    }
+
+    /* --- Smooth Animations --- */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .glass-card {
+        animation: fadeInUp 0.6s ease-out backwards;
+    }
+
+    .glass-card:nth-child(1) { animation-delay: 0.05s; }
+    .glass-card:nth-child(2) { animation-delay: 0.1s; }
+    .glass-card:nth-child(3) { animation-delay: 0.15s; }
+    .glass-card:nth-child(4) { animation-delay: 0.2s; }
+    .glass-card:nth-child(5) { animation-delay: 0.25s; }
+    .glass-card:nth-child(6) { animation-delay: 0.3s; }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4 mt-2 flex-wrap gap-3">
-    <div>
-        <h2 class="fw-bold mb-1" style="color: #111; letter-spacing: -1px; font-size: 2rem;">Dashboard</h2>
-        <span class="text-muted fw-medium">Here's what's happening at <strong class="text-sage">{{ session.get('company_name', 'your store') }}</strong> today.</span>
-    </div>
-    <div class="d-flex gap-3 align-items-center">
-        <div class="text-taupe fw-bold bg-white px-4 py-2 border rounded-pill shadow-sm" style="font-size: 0.85rem;">
-            📅 {{ current_date }}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+        <div>
+            <h1 class="dashboard-title mb-1">Dashboard</h1>
+            <p class="mb-0" style="color: var(--text-secondary); font-weight: 600; font-size: 1.05rem;">
+                Analytics for <strong style="color: var(--sage-primary);">{{ session.get('company_name', 'your store') }}</strong>
+            </p>
         </div>
-        <a href="/billing" class="btn-gradient text-decoration-none d-flex align-items-center gap-2">
-            <span class="fs-5">+</span> New Sale
-        </a>
+        
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <form method="GET" action="/billing/dashboard" class="date-filter-box m-0">
+                <span class="date-label">Range:</span>
+                <input type="date" name="start_date" class="date-input" value="{{ metrics.start_date }}" required>
+                <span style="color: var(--text-secondary); font-weight: 900; font-size: 0.8rem;">to</span>
+                <input type="date" name="end_date" class="date-input" value="{{ metrics.end_date }}" required>
+                <button type="submit" class="btn-apply">Update</button>
+            </form>
+
+            <a href="/billing" class="btn-gradient">
+                <span style="font-size: 1.25rem; line-height: 1;">+</span> New Sale
+            </a>
+        </div>
     </div>
 </div>
 
+<!-- KPI Grid -->
 <div class="kpi-grid">
-
-    <!-- HERO (from KPI) -->
+    <!-- Hero Card - Gross Sales -->
     <div class="glass-card hero-card">
-        <div class="kpi-title">Gross Sales (MTD)</div>
-        <div class="kpi-value">₹{{ "%.2f"|format(metrics.month_gross_sales | default(0)) }}</div>
-        <div class="kpi-trend" style="background: rgba(255,255,255,0.2); color: white;">
-            Pre-tax actual earnings
+        <div class="kpi-title">
+            <span>💎</span>
+            <span>Gross Sales (Range)</span>
+        </div>
+        <div class="kpi-value">₹{{ "%.2f"|format(metrics.range_gross_sales | default(0)) }}</div>
+        <div class="kpi-trend">
+            <span>📊</span>
+            Pre-tax earnings for selected dates
         </div>
     </div>
 
-    <!-- TODAY REVENUE (merged) -->
-    <div class="glass-card">
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <div class="kpi-title">Today's Revenue</div>
-                <div class="kpi-value">₹{{ "%.2f"|format(metrics.today_revenue | default(0)) }}</div>
-                <div class="kpi-trend trend-up">
-                    ↑ {{ metrics.today_invoices | default(0) }} Bills Today
-                </div>
-            </div>
-            <div class="metric-icon-wrapper bg-sage-light">📈</div>
+    <!-- Today's Revenue -->
+    <div class="glass-card accent-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="metric-icon-wrapper" style="background: var(--gradient-sage); color: white;">⚡</div>
+        </div>
+        <div class="kpi-title">Today's Live Revenue</div>
+        <div class="kpi-value" style="color: var(--sage-primary);">₹{{ "%.2f"|format(metrics.today_revenue | default(0)) }}</div>
+        <div class="kpi-trend trend-up">
+            <span>🔥</span>
+            Today's ongoing performance
         </div>
     </div>
 
-    <!-- TOTAL REVENUE -->
+    <!-- Total Revenue -->
     <div class="glass-card">
-        <div class="metric-icon-wrapper bg-terra-light mb-2">💰</div>
-        <div class="kpi-title">Total Revenue (MTD)</div>
-        <div class="kpi-value">₹{{ "%.2f"|format(metrics.month_revenue | default(0)) }}</div>
-        <div class="kpi-trend trend-neutral">Gross sales + GST collected</div>
-    </div>
-
-    <!-- AVG ORDER VALUE -->
-    <div class="glass-card">
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <div class="kpi-title">Avg Order Value</div>
-                <div class="kpi-value">₹{{ "%.2f"|format(metrics.aov | default(0)) }}</div>
-                <div class="kpi-trend trend-neutral">Per invoice this month</div>
-            </div>
-            <div class="metric-icon-wrapper bg-terra-light">🛒</div>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="metric-icon-wrapper">💰</div>
+        </div>
+        <div class="kpi-title">Total Revenue (Range)</div>
+        <div class="kpi-value" style="color: var(--sage-dark);">₹{{ "%.2f"|format(metrics.range_revenue | default(0)) }}</div>
+        <div class="kpi-trend trend-neutral">
+            Gross + GST for selected dates
         </div>
     </div>
 
-    <!-- TAX -->
-    <div class="glass-card">
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <div class="kpi-title">Tax Collected</div>
-                <div class="kpi-value">₹{{ "%.2f"|format(metrics.month_tax | default(0)) }}</div>
-                <div class="kpi-trend trend-neutral">Total GST Liability</div>
-            </div>
-            <div class="metric-icon-wrapper bg-taupe-light">🏛️</div>
+    <!-- Average Order Value -->
+    <div class="glass-card accent-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="metric-icon-wrapper" style="background: linear-gradient(135deg, #F5E6D3 0%, var(--beige-warm) 100%);">🛒</div>
+        </div>
+        <div class="kpi-title">Avg Order Value</div>
+        <div class="kpi-value">₹{{ "%.2f"|format(metrics.aov | default(0)) }}</div>
+        <div class="kpi-trend trend-neutral">
+            AOV for {{ metrics.range_invoices }} invoices
         </div>
     </div>
 
-    <!-- INVENTORY -->
+    <!-- Tax Liability -->
     <div class="glass-card">
-        <div class="metric-icon-wrapper bg-sage-light mb-2" style="background-color:#f4f4f4; color:#555;">📦</div>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="metric-icon-wrapper" style="background: var(--cream-soft); color: var(--sage-dark);">🏛️</div>
+        </div>
+        <div class="kpi-title">Tax Liability (GST)</div>
+        <div class="kpi-value" style="color: var(--text-primary);">₹{{ "%.2f"|format(metrics.range_tax | default(0)) }}</div>
+        <div class="kpi-trend trend-neutral">
+            For selected dates
+        </div>
+    </div>
+
+    <!-- Inventory -->
+    <div class="glass-card accent-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="metric-icon-wrapper" style="background: var(--gradient-warm);">📦</div>
+        </div>
         <div class="kpi-title">Inventory Size</div>
         <div class="kpi-value">{{ metrics.total_products | default(0) }}</div>
-        <div class="kpi-trend trend-neutral">Active products in catalog</div>
+        <div class="kpi-trend trend-neutral">
+            Active products in catalog
+        </div>
     </div>
-
 </div>
 
+<!-- Charts Row -->
 <div class="row g-4 mb-4">
+    <!-- Revenue Chart -->
     <div class="col-12 col-xl-8">
-        <div class="glass-card h-100 d-flex flex-column p-0">
-            <div class="p-4 border-bottom" style="border-color: #f4f4f4;">
-                <h5 class="fw-bold text-dark mb-0 fs-5">Revenue Pulse (7 Days)</h5>
+        <div class="chart-card h-100">
+            <div class="chart-header d-flex justify-content-between align-items-center">
+                <h5 class="chart-title mb-0">Revenue Pulse</h5>
+                <span class="date-range-badge">{{ metrics.start_date }} to {{ metrics.end_date }}</span>
             </div>
-            <div class="chart-box p-4 flex-grow-1">
+            <div class="chart-box">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
     </div>
 
+    <!-- Payment Breakdown -->
     <div class="col-12 col-xl-4">
-        <div class="glass-card h-100 d-flex flex-column p-0">
-            <div class="p-4 border-bottom" style="border-color: #f4f4f4;">
-                <h5 class="fw-bold text-dark mb-0 fs-5">Payment Breakdown</h5>
+        <div class="chart-card h-100">
+            <div class="chart-header">
+                <h5 class="chart-title mb-0">Payment Breakdown</h5>
             </div>
-            <div class="chart-box p-4 flex-grow-1 d-flex justify-content-center align-items-center">
+            <div class="chart-box d-flex justify-content-center align-items-center">
                 <canvas id="paymentChart"></canvas>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Transactions Table -->
 <div class="row mb-5">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3 px-2">
-            <h5 class="fw-bold text-dark mb-0 fs-5">Latest Transactions</h5>
-            <a href="/billing/history" class="text-sage fw-bold text-decoration-none">View All →</a>
-        </div>
-        
-        <div class="table-responsive">
-            <table class="adv-table">
-                <thead>
-                    <tr>
-                        <th>Invoice ID</th>
-                        <th>Customer</th>
-                        <th>Date & Time</th>
-                        <th>Status</th>
-                        <th class="text-end">Amount</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for inv in recent_invoices %}
-                    <tr onclick="window.location.href='/billing/invoice/{{ inv.id }}'">
-                        <td>
-                            <strong class="text-dark">#{{ inv.invoice_number.split('-')[-1] }}</strong>
-                            <small class="d-block text-muted">{{ inv.invoice_number }}</small>
-                        </td>
-                        <td>
-                            <strong class="text-dark">{{ inv.customer.name }}</strong>
-                            <small class="d-block text-muted">+91 {{ inv.customer.phone_number }}</small>
-                        </td>
-                        <td>
-                            <span class="text-dark fw-medium">{{ inv.created_at.strftime('%b %d, %Y') }}</span>
-                            <small class="d-block text-muted">{{ inv.created_at.strftime('%I:%M %p') }}</small>
-                        </td>
-                        <td>
-                            {% if inv.is_paid %}
-                                <div class="status-badge"><span class="dot dot-paid"></span> {{ inv.payment_method }}</div>
-                            {% else %}
-                                <div class="status-badge"><span class="dot dot-pending"></span> Pending</div>
-                            {% endif %}
-                        </td>
-                        <td class="text-end">
-                            <strong class="fs-5 text-dark">₹{{ "%.2f"|format(inv.grand_total) }}</strong>
-                        </td>
-                        <td class="text-center">
-                            <a href="/billing/invoice/{{ inv.id }}" class="btn btn-sm btn-light border shadow-sm rounded-pill px-3 fw-bold text-sage">View PDF</a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5">
-                            <div class="text-muted fs-1 mb-2 opacity-50">📭</div>
-                            <h5 class="fw-bold text-dark mb-1">No Transactions Yet</h5>
-                            <p class="text-muted">Generate your first bill to see it here.</p>
-                            <a href="/billing" class="btn-gradient text-decoration-none mt-2 d-inline-block">Create Invoice</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="chart-title mb-0">Latest Transactions</h5>
+                <a href="/billing/history" class="btn-gradient" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    View All →
+                </a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="adv-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice ID</th>
+                            <th>Customer</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in recent_invoices %}
+                        <tr onclick="window.location.href='/billing/invoice/{{ inv.id }}'">
+                            <td>
+                                <strong style="color: var(--sage-dark); font-weight: 900;">#{{ inv.invoice_number.split('-')[-1] }}</strong>
+                                <small class="d-block" style="color: var(--text-secondary); font-weight: 600;">{{ inv.invoice_number }}</small>
+                            </td>
+                            <td>
+                                <strong style="color: var(--text-primary); font-weight: 800;">{{ inv.customer.name }}</strong>
+                                <small class="d-block" style="color: var(--text-secondary);">+91 {{ inv.customer.phone_number }}</small>
+                            </td>
+                            <td>
+                                <span style="color: var(--text-primary); font-weight: 700;">{{ inv.created_at.strftime('%b %d, %Y') }}</span>
+                                <small class="d-block" style="color: var(--text-secondary);">{{ inv.created_at.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                {% if inv.is_paid %}
+                                    <div class="status-badge"><span class="dot dot-paid"></span> {{ inv.payment_method }}</div>
+                                {% else %}
+                                    <div class="status-badge"><span class="dot dot-pending"></span> Pending</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <strong style="font-size: 1.35rem; color: var(--sage-dark); font-weight: 900;">₹{{ "%.2f"|format(inv.grand_total) }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn-gradient" style="padding: 0.5rem 1.25rem; font-size: 0.8rem;">
+                                    View PDF
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="p-0">
+                                <div class="empty-state">
+                                    <div class="empty-icon">📭</div>
+                                    <h5 class="empty-title">No Transactions Yet</h5>
+                                    <p class="empty-text">Generate your first bill to see it here.</p>
+                                    <a href="/billing" class="btn-gradient">Create Invoice</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Color palette from design
+        const colors = {
+            sage: '#647971',
+            sageLight: '#7a9087',
+            sageDark: '#4a5c54',
+            beige: '#E8DDD3',
+            cream: '#F5F3F0'
+        };
         
         // --- 1. REVENUE LINE CHART ---
         const ctxRev = document.getElementById('revenueChart').getContext('2d');
         
-        // Advanced Gradient
-        let gradRev = ctxRev.createLinearGradient(0, 0, 0, 350);
-        gradRev.addColorStop(0, 'rgba(102, 121, 107, 0.5)'); // Sage
-        gradRev.addColorStop(1, 'rgba(102, 121, 107, 0.0)'); 
+        let gradRev = ctxRev.createLinearGradient(0, 0, 0, 320);
+        gradRev.addColorStop(0, 'rgba(100, 121, 113, 0.4)');
+        gradRev.addColorStop(1, 'rgba(100, 121, 113, 0.02)'); 
 
         const revLabels = {{ chart_labels | safe | default("[]") }};
         const revData = {{ chart_data | safe | default("[]") }};
@@ -273,31 +738,63 @@
                 datasets: [{
                     label: 'Revenue (₹)',
                     data: revData,
-                    borderColor: '#66796B',
+                    borderColor: colors.sage,
                     backgroundColor: gradRev,
-                    borderWidth: 3,
+                    borderWidth: 3.5,
                     pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#66796B',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 7,
+                    pointBorderColor: colors.sage,
+                    pointBorderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointHoverBorderWidth: 4,
                     fill: true,
-                    tension: 0.4 // Smooth bezier curves
+                    tension: 0.4
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#111', titleColor: '#fff', bodyColor: '#fff',
-                        padding: 12, cornerRadius: 8, displayColors: false,
-                        callbacks: { label: function(ctx) { return '₹ ' + ctx.parsed.y.toLocaleString(); } }
+                        backgroundColor: colors.sageDark,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 16,
+                        cornerRadius: 12,
+                        displayColors: false,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 15, weight: 'bold' },
+                        callbacks: {
+                            label: function(ctx) {
+                                return '₹ ' + ctx.parsed.y.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
                     }
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } },
-                    y: { grid: { color: '#f0f0f0', borderDash: [5, 5] }, border: {display: false}, ticks: { color: '#888' } }
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: colors.sage,
+                            font: { weight: 'bold', size: 11 }
+                        },
+                        border: { display: false }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(100, 121, 113, 0.08)',
+                            borderDash: [8, 4]
+                        },
+                        border: { display: false },
+                        ticks: {
+                            color: colors.sage,
+                            font: { weight: 'bold', size: 11 },
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString('en-IN');
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -307,12 +804,11 @@
         const payLabels = {{ pay_labels | safe | default("['No Data']") }};
         const payData = {{ pay_data | safe | default("[1]") }};
         
-        // Dynamic colors based on method
-        const colors = payLabels.map(label => {
-            if(label === 'Cash') return '#66796B'; // Sage
-            if(label === 'UPI') return '#D7A184';  // Terracotta
-            if(label === 'Card') return '#BA8E7A'; // Taupe
-            return '#e0e0e0'; // Other/None
+        const paymentColors = payLabels.map(label => {
+            if(label === 'Cash') return colors.sage;
+            if(label === 'UPI') return colors.sageLight;
+            if(label === 'Card') return colors.beige;
+            return colors.cream;
         });
 
         new Chart(ctxPay, {
@@ -321,19 +817,39 @@
                 labels: payLabels,
                 datasets: [{
                     data: payData,
-                    backgroundColor: colors,
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    backgroundColor: paymentColors,
+                    borderWidth: 4,
+                    borderColor: '#ffffff',
+                    hoverOffset: 15,
+                    hoverBorderWidth: 5
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
-                cutout: '75%', // Makes it a thin, elegant ring
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
-                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle', font: {weight: 'bold'} } },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { weight: 'bold', size: 12 },
+                            color: colors.sageDark
+                        }
+                    },
                     tooltip: {
-                        backgroundColor: '#111', padding: 12, cornerRadius: 8,
-                        callbacks: { label: function(ctx) { return ' ' + ctx.parsed + ' Invoices'; } }
+                        backgroundColor: colors.sageDark,
+                        padding: 14,
+                        cornerRadius: 10,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 14, weight: 'bold' },
+                        callbacks: {
+                            label: function(ctx) {
+                                return ' ' + ctx.parsed + ' Invoices';
+                            }
+                        }
                     }
                 }
             }

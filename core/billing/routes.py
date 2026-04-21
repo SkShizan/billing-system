@@ -241,6 +241,9 @@ def history():
         search_query=search_query
     )
 
+from datetime import datetime, timedelta
+from sqlalchemy import func
+
 @billing_bp.route('/dashboard')
 def dashboard():
     if not is_logged_in():
@@ -248,67 +251,101 @@ def dashboard():
         
     company_id = session['company_id']
     today = datetime.utcnow().date()
-    start_of_month = today.replace(day=1)
     
+    # 1. 🎯 Get Date Range from User (Default to last 7 days if none selected)
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = today - timedelta(days=6)
+            end_date = today
+    else:
+        start_date = today - timedelta(days=6)
+        end_date = today
+
+    # 2. 🎯 Filter Invoices by Selected Date Range
+    range_invoices = Invoice.query.filter(
+        Invoice.company_id == company_id,
+        func.date(Invoice.created_at) >= start_date,
+        func.date(Invoice.created_at) <= end_date
+    ).all()
+    
+    # Keep today's revenue separate just for the live "Today" card
     today_invoices = Invoice.query.filter(
         Invoice.company_id == company_id,
         func.date(Invoice.created_at) == today
     ).all()
-    
-    month_invoices = Invoice.query.filter(
-        Invoice.company_id == company_id,
-        func.date(Invoice.created_at) >= start_of_month
-    ).all()
 
+    # 3. Calculate Metrics for the Selected Range
     today_revenue = sum(inv.grand_total for inv in today_invoices)
-    month_revenue = sum(inv.grand_total for inv in month_invoices)
-    month_gross_sales = sum(inv.subtotal for inv in month_invoices)
-    month_tax = sum(inv.total_tax for inv in month_invoices)
+    range_revenue = sum(inv.grand_total for inv in range_invoices)
+    range_gross_sales = sum(inv.subtotal for inv in range_invoices)
+    range_tax = sum(inv.total_tax for inv in range_invoices)
     
-    aov = (month_revenue / len(month_invoices)) if month_invoices else 0.0
+    aov = (range_revenue / len(range_invoices)) if range_invoices else 0.0
     total_products = Product.query.filter_by(company_id=company_id).count()
 
     metrics = {
         'today_revenue': today_revenue,
-        'today_invoices': len(today_invoices),
-        'month_revenue': month_revenue,
-        'month_gross_sales': month_gross_sales,
-        'month_tax': month_tax,
+        'range_invoices': len(range_invoices),
+        'range_revenue': range_revenue,
+        'range_gross_sales': range_gross_sales,
+        'range_tax': range_tax,
         'aov': aov,
-        'total_products': total_products
+        'total_products': total_products,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d')
     }
 
+    # 4. Recent Transactions
     recent_invoices = Invoice.query.filter_by(company_id=company_id)\
         .order_by(Invoice.created_at.desc())\
         .limit(6).all()
 
+    # 5. 🎯 Dynamic Chart 1: Revenue Pulse (Adjusts based on selected days)
+    delta_days = (end_date - start_date).days
     chart_labels = []
     chart_data = []
-    for i in range(6, -1, -1):
-        target_date = today - timedelta(days=i)
-        daily_revenue = db.session.query(func.sum(Invoice.grand_total)).filter(
-            Invoice.company_id == company_id,
-            func.date(Invoice.created_at) == target_date
-        ).scalar() or 0.0
-        
-        label = "Today" if i == 0 else target_date.strftime("%a")
-        chart_labels.append(label)
-        chart_data.append(float(daily_revenue))
 
+    # Get grouped daily revenues from the DB for extreme speed
+    daily_revenues = db.session.query(
+        func.date(Invoice.created_at).label('date'),
+        func.sum(Invoice.grand_total).label('revenue')
+    ).filter(
+        Invoice.company_id == company_id,
+        func.date(Invoice.created_at) >= start_date,
+        func.date(Invoice.created_at) <= end_date
+    ).group_by(func.date(Invoice.created_at)).all()
+
+    revenue_map = {str(d.date): float(d.revenue) for d in daily_revenues}
+
+    # Loop through every day in the selected range to plot the chart
+    for i in range(delta_days + 1):
+        current_d = start_date + timedelta(days=i)
+        label = current_d.strftime("%b %d")
+        chart_labels.append(label)
+        chart_data.append(revenue_map.get(str(current_d), 0.0))
+
+    # 6. 🎯 Dynamic Chart 2: Payment Method Breakdown
     payment_counts = db.session.query(Invoice.payment_method, func.count(Invoice.id))\
-        .filter(Invoice.company_id == company_id, func.date(Invoice.created_at) >= start_of_month)\
+        .filter(
+            Invoice.company_id == company_id,
+            func.date(Invoice.created_at) >= start_date,
+            func.date(Invoice.created_at) <= end_date
+        )\
         .group_by(Invoice.payment_method).all()
     
     pay_labels = [p[0] for p in payment_counts] if payment_counts else ['No Data']
     pay_data = [p[1] for p in payment_counts] if payment_counts else [1]
 
-    current_date = today.strftime("%d %b %Y")
-
     return render_template(
         'dashboard/index.html', 
         metrics=metrics, 
         recent_invoices=recent_invoices, 
-        current_date=current_date,
         chart_labels=chart_labels, 
         chart_data=chart_data,
         pay_labels=pay_labels,
