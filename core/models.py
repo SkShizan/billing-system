@@ -24,6 +24,11 @@ class Company(db.Model):
     products = db.relationship('Product', backref='company', lazy=True)
     customers = db.relationship('Customer', backref='company', lazy=True)
     invoices = db.relationship('Invoice', backref='company', lazy=True)
+    
+    smtp_server = db.Column(db.String(150), nullable=True)
+    smtp_port = db.Column(db.Integer, default=587)
+    smtp_username = db.Column(db.String(150), nullable=True)
+    smtp_password = db.Column(db.String(150), nullable=True)
 
 class Customer(db.Model):
     __tablename__ = 'customers'
@@ -31,6 +36,7 @@ class Customer(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # ISOLATION
     name = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(15), nullable=False) # Removed unique=True so diff companies can have same customer
+    email = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     invoices = db.relationship('Invoice', backref='customer', lazy=True)
@@ -80,6 +86,7 @@ class InvoiceItem(db.Model):
     discount_type = db.Column(db.String(10), nullable=True)
     discount_value = db.Column(db.Float, default=0.0)
     gst_percentage_at_purchase = db.Column(db.Float, nullable=False)
+    hsn_at_purchase = db.Column(db.String(20), nullable=True)
     # 🎯 Custom CGST/SGST overrides
     cgst_percentage = db.Column(db.Float, default=0.0)
     sgst_percentage = db.Column(db.Float, default=0.0)

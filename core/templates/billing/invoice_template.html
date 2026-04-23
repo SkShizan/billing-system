@@ -173,6 +173,9 @@
         {% if not is_public %}
         <button class="btn btn-whatsapp" onclick="sendWhatsApp()">💬 Send WhatsApp</button>
         <a href="/billing" class="btn btn-secondary">🔙 POS</a>
+        <button onclick="sendInvoiceEmail({{ invoice.id }})" id="emailBtn" class="btn-whatsapp btn btn-outline-primary ms-2 d-flex align-items-center gap-2">
+    <span>✉️</span> Send Email
+</button>
         {% endif %}
     </div>
 
@@ -234,7 +237,7 @@
                         <tr>
                             <td>
                                 <div class="item-name">{{ item.product.name }}</div>
-                                <div class="item-hsn">HSN/SAC: {{ item.product.hsn_code or 'N/A' }}</div>
+                                <div class="item-hsn">HSN/SAC: {{ item.hsn_at_purchase or item.product.hsn_code or 'N/A' }}</div>
                             </td>
                             <td class="right fw-bold" style="font-size: 12px; color: #111827;">{{ item.quantity }}</td>
                             
@@ -344,6 +347,37 @@
         window.onbeforeprint = function () {
             document.title = 'Invoice_{{ invoice.invoice_number }}';
         };
+
+        // Add this inside the <script> tags at the bottom of invoice_template.html
+async function sendInvoiceEmail(invoiceId) {
+    const btn = document.getElementById('emailBtn');
+    const originalContent = btn.innerHTML;
+    
+    // Change button to loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+
+    try {
+        const response = await fetch(`/billing/api/send_invoice_email/${invoiceId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message); // Success pop-up
+        } else {
+            alert("Error: " + result.error);
+        }
+    } catch (error) {
+        console.error("Email error:", error);
+        alert("A network error occurred while sending the email.");
+    } finally {
+        // Reset button state
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    }
+}
     </script>
 </body>
 </html>

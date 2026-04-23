@@ -3,57 +3,198 @@
 {% block content %}
 <style>
     /* Premium POS Styling */
-    .pos-title { color: var(--color-sage); font-weight: 800; letter-spacing: -0.5px; }
-    .pos-label { font-weight: 700; color: var(--color-taupe); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; }
-    
+    .pos-title {
+        color: var(--color-sage);
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    .pos-label {
+        font-weight: 700;
+        color: var(--color-taupe);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
     /* Smooth Form Controls */
-    .form-control, .form-select { border: 1px solid #e0e0e0; border-radius: 8px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .form-control:focus, .form-select:focus { border-color: var(--color-sage); box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15); outline: none; }
-    
+    .form-control,
+    .form-select {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--color-sage);
+        box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15);
+        outline: none;
+    }
+
     /* Modern Floating Labels for Customer Details */
-    .form-floating > label { color: #888; font-weight: 500; font-size: 0.9rem; }
-    .form-floating > .form-control:focus ~ label, .form-floating > .form-control:not(:placeholder-shown) ~ label { color: var(--color-sage); font-weight: 600; }
+    .form-floating>label {
+        color: #888;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .form-floating>.form-control:focus~label,
+    .form-floating>.form-control:not(:placeholder-shown)~label {
+        color: var(--color-sage);
+        font-weight: 600;
+    }
 
     /* Seamless Table Inputs (Looks like text until focused) */
-    .table-input { border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 6px 10px; width: 100%; transition: all 0.2s; font-size: 0.9rem; }
-    .table-input:focus { border-color: var(--color-sage); background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-    .table-input[readonly] { color: #6c757d; font-weight: 500; cursor: default; }
-    
+    .table-input {
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: 6px;
+        padding: 6px 10px;
+        width: 100%;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .table-input:focus {
+        border-color: var(--color-sage);
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-input[readonly] {
+        color: #6c757d;
+        font-weight: 500;
+        cursor: default;
+    }
+
     /* Table Styling */
-    .table-pos { margin-bottom: 0; }
-    .table-pos th { background-color: #Fdfbf9; color: var(--color-sage); border-bottom: 2px solid #eaeaea; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
-    .table-pos td { padding: 0.75rem; vertical-align: middle; border-bottom: 1px solid #f4f4f4; }
-    .table-pos tbody tr:hover { background-color: #faf9f7; }
+    .table-pos {
+        margin-bottom: 0;
+    }
+
+    .table-pos th {
+        background-color: #Fdfbf9;
+        color: var(--color-sage);
+        border-bottom: 2px solid #eaeaea;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        padding: 1rem 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .table-pos td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f4f4f4;
+    }
+
+    .table-pos tbody tr:hover {
+        background-color: #faf9f7;
+    }
 
     /* Custom Switch & Toggles */
-    .settings-card { background-color: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
-    .settings-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.04); transform: translateY(-1px); }
+    .settings-card {
+        background-color: #ffffff;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .settings-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        transform: translateY(-1px);
+    }
 
     /* Elevated Checkout Pane */
-    .checkout-pane { background: linear-gradient(145deg, #ffffff, #faf9f7); border-radius: 16px; border: 1px solid #eaeaea; box-shadow: 0 10px 30px rgba(0,0,0,0.04); overflow: hidden; }
-    .checkout-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
-    .grand-total-box { background-color: rgba(102, 121, 107, 0.08); padding: 20px; border-radius: 12px; margin-top: 15px; border: 1px solid rgba(102, 121, 107, 0.15); }
-    
-    /* Action Button */
-    .btn-generate { background-color: var(--color-sage); color: white; border: none; border-radius: 10px; padding: 14px; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; }
-    .btn-generate:hover { background-color: #556659; box-shadow: 0 6px 20px rgba(102, 121, 107, 0.3); transform: translateY(-2px); }
-    /* 🎯 PRO CART STYLING */
-    .cart-card { border-radius: 16px; border: 1px solid #eaeaea; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; }
-    .cart-header { background: #ffffff; border-bottom: 1px solid #f4f4f4; padding: 1.25rem 1.5rem; }
-    
-    /* 🎯 ADD ROW BUTTON */
-    .btn-add-row { background-color: #fdfaf7; color: var(--color-terracotta); border: 1px dashed var(--color-terracotta); transition: all 0.2s ease; }
-    .btn-add-row:hover { background-color: var(--color-terracotta); color: #fff; box-shadow: 0 4px 10px rgba(215, 161, 132, 0.3); }
-    
-    /* 🎯 RESPONSIVE TABLE FIX */
-    .pos-table-wrapper { 
-        overflow-x: auto; 
-        -webkit-overflow-scrolling: touch;
-        min-height: 250px; 
+    .checkout-pane {
+        background: linear-gradient(145deg, #ffffff, #faf9f7);
+        border-radius: 16px;
+        border: 1px solid #eaeaea;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
     }
-    
-    .table-pos { min-width: 1050px; margin-bottom: 0; }
-    .table-pos th { white-space: nowrap; background-color: #fcfbf9; }
+
+    .checkout-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+    }
+
+    .grand-total-box {
+        background-color: rgba(102, 121, 107, 0.08);
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 15px;
+        border: 1px solid rgba(102, 121, 107, 0.15);
+    }
+
+    /* Action Button */
+    .btn-generate {
+        background-color: var(--color-sage);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        transition: all 0.3s;
+    }
+
+    .btn-generate:hover {
+        background-color: #556659;
+        box-shadow: 0 6px 20px rgba(102, 121, 107, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* 🎯 PRO CART STYLING */
+    .cart-card {
+        border-radius: 16px;
+        border: 1px solid #eaeaea;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+    }
+
+    .cart-header {
+        background: #ffffff;
+        border-bottom: 1px solid #f4f4f4;
+        padding: 1.25rem 1.5rem;
+    }
+
+    /* 🎯 ADD ROW BUTTON */
+    .btn-add-row {
+        background-color: #fdfaf7;
+        color: var(--color-terracotta);
+        border: 1px dashed var(--color-terracotta);
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-row:hover {
+        background-color: var(--color-terracotta);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(215, 161, 132, 0.3);
+    }
+
+    /* 🎯 RESPONSIVE TABLE FIX */
+    .pos-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 250px;
+    }
+
+    .table-pos {
+        min-width: 1050px;
+        margin-bottom: 0;
+    }
+
+    .table-pos th {
+        white-space: nowrap;
+        background-color: #fcfbf9;
+    }
 
     .no-arrow {
         -webkit-appearance: none;
@@ -61,13 +202,14 @@
         appearance: none;
         background-image: none !important;
         padding-right: 8px !important;
-        text-align: center; 
+        text-align: center;
     }
 </style>
 
 <div class="row mb-4 mt-2 align-items-center">
     <div class="col d-flex align-items-center">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm border" style="width: 48px; height: 48px; border-color: #eaeaea !important;">
+        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm border"
+            style="width: 48px; height: 48px; border-color: #eaeaea !important;">
             <span class="fs-4">🛒</span>
         </div>
         <h2 class="pos-title mb-0 ms-3">Point of Sale</h2>
@@ -79,22 +221,23 @@
         <h6 class="pos-label mb-0">Customer Details</h6>
     </div>
     <div class="card-body px-4 pb-4 pt-2">
-        <div class="row g-3">
+        <div class="row g-3 mb-3">
             <div class="col-md-6">
-                <div class="form-floating">
-                    <input type="text" id="custName" class="form-control bg-light" placeholder="Full Name" required>
-                    <label for="custName">Customer Full Name</label>
-                </div>
+                <label>Customer Phone *</label>
+                <input type="text" id="custPhone" class="form-control" placeholder="10-digit number" required>
             </div>
             <div class="col-md-6">
-                <div class="form-floating">
-                    <input type="tel" id="custPhone" class="form-control bg-light" placeholder="Phone Number (+91)" required>
-                    <label for="custPhone">Phone Number (+91)</label>
-                </div>
+                <label>Customer Name *</label>
+                <input type="text" id="custName" class="form-control" placeholder="John Doe" required>
+            </div>
+            <div class="col-md-12">
+                <label>Customer Email (Optional)</label>
+                <input type="email" id="customerEmail" class="form-control" placeholder="john@example.com">
             </div>
         </div>
     </div>
 </div>
+
 <div class="row mb-4">
     <div class="col-md-6 mb-3 mb-md-0">
         <div class="form-check form-switch p-3 settings-card d-flex justify-content-between align-items-center h-100">
@@ -130,11 +273,12 @@
             <span class="fs-5">📦</span>
             <h6 class="pos-label mb-0 fs-6 text-sage fw-bold">Cart Items</h6>
         </div>
-        <button class="btn btn-sm px-4 fw-bold rounded-pill btn-add-row d-flex align-items-center gap-2" onclick="addRow()">
+        <button class="btn btn-sm px-4 fw-bold rounded-pill btn-add-row d-flex align-items-center gap-2"
+            onclick="addRow()">
             <span class="fs-5" style="line-height: 0.5;">+</span> Add Product
         </button>
     </div>
-    
+
     <div class="card-body p-0">
         <div class="pos-table-wrapper">
             <table class="table table-pos w-100 align-middle" id="cartTable">
@@ -160,34 +304,38 @@
     <div class="col-lg-5 col-md-7">
         <div class="checkout-pane p-4">
             <h6 class="pos-label mb-3 border-bottom pb-2">Billing Summary</h6>
-            
+
             <div class="checkout-row">
                 <span class="text-muted fw-semibold">Subtotal:</span>
                 <span class="fw-bold text-dark fs-5">₹<span id="subtotal">0.00</span></span>
             </div>
-            
+
             <div class="checkout-row">
                 <span class="text-muted fw-semibold">Global Cart Discount:</span>
                 <div class="d-flex align-items-center gap-1" style="max-width: 140px;">
-                    <select id="discountType" class="form-select form-select-sm bg-white shadow-sm no-arrow" onchange="calculateGrandTotal()">
+                    <select id="discountType" class="form-select form-select-sm bg-white shadow-sm no-arrow"
+                        onchange="calculateGrandTotal()">
                         <option value="flat">₹</option>
                         <option value="percentage">%</option>
                     </select>
-                    <input type="number" id="discountValue" class="form-control form-control-sm text-end bg-white shadow-sm" value="0" onkeyup="calculateGrandTotal()">
+                    <input type="number" id="discountValue"
+                        class="form-control form-control-sm text-end bg-white shadow-sm" value="0"
+                        onkeyup="calculateGrandTotal()">
                 </div>
             </div>
-            
+
             <div class="checkout-row border-bottom pb-3 mb-2">
                 <span class="text-muted fw-semibold">Total Tax (GST):</span>
                 <span class="fw-bold text-dark fs-5">₹<span id="totalTax">0.00</span></span>
             </div>
-            
+
             <div class="grand-total-box d-flex justify-content-between align-items-center">
                 <span class="text-sage fw-bold fs-5 text-uppercase tracking-wide">Grand Total</span>
                 <span class="text-sage fw-bolder fs-3">₹<span id="grandTotal">0.00</span></span>
             </div>
-            
-            <button class="btn btn-generate w-100 mt-4 d-flex justify-content-center align-items-center gap-2" id="generateBtn" onclick="generateBill()">
+
+            <button class="btn btn-generate w-100 mt-4 d-flex justify-content-center align-items-center gap-2"
+                id="generateBtn" onclick="generateBill()">
                 <span>Generate Invoice</span>
                 <span class="fs-5">→</span>
             </button>
@@ -197,21 +345,21 @@
 
 <script>
     let searchTimers = {};
-    
+
     // We remove the default onload row generation if we are editing an invoice
-    window.onload = function() { 
+    window.onload = function () {
         if (!window.EDIT_INVOICE_ID) {
-            addRow(); 
+            addRow();
         }
     };
 
     function addRow() {
         const tbody = document.getElementById('cartBody');
-        const rowId = Date.now(); 
-        
+        const rowId = Date.now();
+
         const tr = document.createElement('tr');
         tr.id = `row-${rowId}`;
-        
+
         tr.innerHTML = `
             <td class="ps-4">
                 <div class="position-relative">
@@ -220,8 +368,8 @@
                     <ul class="list-group position-absolute w-100 shadow border-0" id="productSuggestions-${rowId}" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; border-radius: 8px; top: 100%; left: 0;"></ul>
                 </div>
             </td>
-            <td><input type="text" class="table-input text-muted text-center hsn-input" readonly tabindex="-1"></td>
-            <td><input type="number" class="table-input base-price-input text-center fw-semibold text-dark" readonly tabindex="-1"></td>
+            <td><input type="text" class="table-input text-center text-dark fw-semibold hsn-input bg-white border shadow-sm" style="border-color: #eaeaea !important; min-width: 80px;" placeholder="HSN"></td>
+            <td><input type="number" step="0.01" class="table-input base-price-input text-center fw-semibold text-dark bg-white border shadow-sm" style="border-color: #eaeaea !important; min-width: 80px;" onkeyup="calculateGrandTotal()" onchange="calculateGrandTotal()"></td>
             
             <td>
                 <div class="d-flex align-items-center bg-white border rounded-2 px-1 shadow-sm" style="border-color: #eaeaea !important;">
@@ -261,11 +409,11 @@
         const container = row.querySelector('.gst-container');
         const rawGst = parseFloat(row.querySelector('.raw-gst').value) || 0;
         const hasProduct = row.querySelector('.product-id').value !== '';
-        
+
         if (isSplit && hasProduct) {
             let cgstVal = (rawGst / 2).toFixed(1);
             let sgstVal = (rawGst / 2).toFixed(1);
-            
+
             // Retain pre-existing input values if we are currently editing
             const existingCgst = row.querySelector('.cgst-input');
             const existingSgst = row.querySelector('.sgst-input');
@@ -285,7 +433,13 @@
                 </div>
             `;
         } else {
-            container.innerHTML = `<input type="text" class="table-input text-muted text-center" readonly tabindex="-1" value="${hasProduct ? rawGst + '%' : ''}">`;
+            container.innerHTML = `
+            <div class="d-flex align-items-center bg-white border rounded-2 px-1 shadow-sm" style="border-color: #eaeaea !important;">
+                <input type="number" class="table-input text-center fw-semibold text-dark p-1 bg-transparent" value="${rawGst}" step="0.1" style="min-width: 60px;" 
+                onkeyup="this.closest('td').querySelector('.raw-gst').value = this.value || 0; calculateGrandTotal()" 
+                onchange="this.closest('td').querySelector('.raw-gst').value = this.value || 0; calculateGrandTotal()">
+                <span class="text-muted fw-bold pe-2" style="font-size: 0.8rem;">%</span>
+            </div>`;
         }
     }
 
@@ -301,7 +455,7 @@
         const query = inputElem.value.trim();
         const suggestionBox = document.getElementById(`productSuggestions-${rowId}`);
         const row = document.getElementById(`row-${rowId}`);
-        
+
         const hsnInput = row.querySelector('.hsn-input');
         const totalInput = row.querySelector('.row-total-input');
 
@@ -331,16 +485,16 @@
 
                         li.onclick = () => {
                             inputElem.value = p.name;
-                            inputElem.style.borderBottom = "1px solid transparent"; 
-                            
+                            inputElem.style.borderBottom = "1px solid transparent";
+
                             row.querySelector('.product-id').value = p.id;
                             hsnInput.value = p.hsn || '';
                             row.querySelector('.base-price-input').value = p.base_price || p.price;
                             row.querySelector('.discount-type-input').value = p.discount_type || 'flat';
                             row.querySelector('.discount-value-input').value = p.discount_value || 0;
-                            row.querySelector('.raw-gst').value = p.gst; 
-                            
-                            updateRowGstView(row); 
+                            row.querySelector('.raw-gst').value = p.gst;
+
+                            updateRowGstView(row);
                             suggestionBox.style.display = 'none';
                             calculateGrandTotal();
                         };
@@ -355,7 +509,7 @@
         }, 300);
     }
 
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         if (!event.target.closest('.position-relative')) {
             document.querySelectorAll('[id^="productSuggestions-"]').forEach(box => { box.style.display = 'none'; });
         }
@@ -380,16 +534,16 @@
             const discountType = row.querySelector('.discount-type-input').value;
             const discountValue = parseFloat(row.querySelector('.discount-value-input').value) || 0;
             const qty = parseInt(row.querySelector('.qty-input').value) || 0;
-            
+
             let finalRate = basePrice;
             if (discountType === 'flat') {
                 finalRate = basePrice - discountValue;
             } else if (discountType === 'percentage') {
                 finalRate = basePrice - (basePrice * (discountValue / 100));
             }
-            if (finalRate < 0) finalRate = 0; 
-            
-            if(row.querySelector('.final-rate-display')) {
+            if (finalRate < 0) finalRate = 0;
+
+            if (row.querySelector('.final-rate-display')) {
                 row.querySelector('.final-rate-display').innerText = finalRate.toFixed(2);
             }
 
@@ -402,9 +556,9 @@
 
             const rowBaseTotal = finalRate * qty;
             const rowTax = rowBaseTotal * (totalGstPercent / 100);
-            
+
             row.querySelector('.row-total-input').value = (rowBaseTotal + rowTax).toFixed(2);
-            subtotal += rowBaseTotal; 
+            subtotal += rowBaseTotal;
             totalTax += rowTax;
         });
 
@@ -432,40 +586,46 @@
         document.querySelectorAll('#cartBody tr').forEach(row => {
             const productId = row.querySelector('.product-id').value;
             const qty = row.querySelector('.qty-input').value;
-            
-            if(productId && qty > 0) {
-                let cgstVal = 0, sgstVal = 0;
-                
+
+            if (productId && qty > 0) {
+                let cgstVal = 0, sgstVal = 0, rawGst = 0;
+
                 if (isSplit && row.querySelector('.cgst-input')) {
                     cgstVal = parseFloat(row.querySelector('.cgst-input').value) || 0;
                     sgstVal = parseFloat(row.querySelector('.sgst-input').value) || 0;
+                    rawGst = cgstVal + sgstVal;
+                } else {
+                    rawGst = parseFloat(row.querySelector('.raw-gst').value) || 0;
                 }
 
-                items.push({ 
-                    product_id: parseInt(productId), 
+                items.push({
+                    product_id: parseInt(productId),
                     quantity: parseInt(qty),
                     base_price: parseFloat(row.querySelector('.base-price-input').value) || 0,
                     discount_type: row.querySelector('.discount-type-input').value,
                     discount_value: parseFloat(row.querySelector('.discount-value-input').value) || 0,
                     final_price: parseFloat(row.querySelector('.final-rate-display').innerText) || 0,
                     cgst: cgstVal,
-                    sgst: sgstVal
+                    sgst: sgstVal,
+                    gst: rawGst,                                  // 🎯 Send Custom GST
+                    hsn: row.querySelector('.hsn-input').value    // 🎯 Send Custom HSN
                 });
             }
         });
 
-        if(items.length === 0) return alert("Please select valid products.");
+        if (items.length === 0) return alert("Please select valid products.");
         const custName = document.getElementById('custName').value.trim();
         const custPhone = document.getElementById('custPhone').value.trim();
-        if(!custName || !custPhone) return alert("Customer Name and Phone required.");
+        const custemail = document.getElementById('customerEmail').value.trim();
+        if (!custName || !custPhone) return alert("Customer Name and Phone required.");
 
-        btn.disabled = true; 
+        btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
 
-        // 🎯 PAYLOAD UPDATED WITH edit_invoice_id
         const payload = {
-            customer_name: custName, 
+            customer_name: custName,
             customer_phone: custPhone,
+            customer_email: custemail,
             subtotal: parseFloat(document.getElementById('subtotal').innerText),
             total_tax: parseFloat(document.getElementById('totalTax').innerText),
             discount_type: document.getElementById('discountType').value,
@@ -480,10 +640,10 @@
 
         try {
             const response = await fetch('/billing/api/generate_bill', {
-                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const result = await response.json();
-            if(result.success) window.location.href = `/billing/invoice/${result.invoice_id}`;
+            if (result.success) window.location.href = `/billing/invoice/${result.invoice_id}`;
             else { alert("Failed."); btn.disabled = false; btn.innerHTML = '<span>Generate Invoice</span><span class="fs-5">→</span>'; }
         } catch (error) {
             console.error(error); alert("Network error."); btn.disabled = false; btn.innerHTML = '<span>Generate Invoice</span><span class="fs-5">→</span>';
@@ -493,43 +653,47 @@
 
 {% if edit_invoice %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. Setup the Global Edit ID Flag
-    window.EDIT_INVOICE_ID = {{ edit_invoice.id }};
-    
-    const headerTitle = document.querySelector('.pos-title');
-    if(headerTitle) headerTitle.innerText = "✏️ Editing Invoice: {{ edit_invoice.invoice_number }}";
-    
-    // 2. Pre-fill Customer Data
-    document.getElementById('custPhone').value = {{ edit_invoice.customer.phone_number | tojson }};
-    document.getElementById('custName').value = {{ edit_invoice.customer.name | tojson }};
+    document.addEventListener('DOMContentLoaded', function () {
 
-    // 3. Pre-fill Invoice Master Settings
-    document.getElementById('discountType').value = '{{ edit_invoice.discount_type }}';
-    document.getElementById('discountValue').value = {{ edit_invoice.discount_value }};
-    
-    if ({{ 'true' if edit_invoice.split_gst else 'false' }}) {
-        document.getElementById('splitGstMasterToggle').checked = true;
-    }
-    if ({{ 'true' if edit_invoice.is_paid else 'false' }}) {
-        document.getElementById('isPaidToggle').checked = true;
-        document.getElementById('paymentMethod').value = '{{ edit_invoice.payment_method }}';
-    }
+        // 🎯 Fixed: Added missing closing bracket
+        window.EDIT_INVOICE_ID = {{ edit_invoice.id }};
 
-    // 4. Inject existing invoice items into the cart UI
-    const tbody = document.getElementById('cartBody');
-    tbody.innerHTML = ''; // Ensure we start with a clean slate
-    
-    {% for item in edit_invoice.items %}
-        (function() {
+        const headerTitle = document.querySelector('.pos-title');
+        if (headerTitle) headerTitle.innerText = "✏️ Editing Invoice: {{ edit_invoice.invoice_number }}";
+
+        // 2. Pre-fill Customer Data
+        document.getElementById('custPhone').value = {{ edit_invoice.customer.phone_number | tojson }};
+        document.getElementById('custName').value = {{ edit_invoice.customer.name | tojson }};
+        
+        // 🎯 Added email pre-fill logic for edit mode
+        document.getElementById('customerEmail').value = {{ (edit_invoice.customer.email or "") | tojson }};
+
+        // 3. Pre-fill Invoice Master Settings
+        document.getElementById('discountType').value = '{{ edit_invoice.discount_type }}';
+        document.getElementById('discountValue').value = {{ edit_invoice.discount_value }};
+
+        if ({{ 'true' if edit_invoice.split_gst else 'false' }}) {
+            document.getElementById('splitGstMasterToggle').checked = true;
+        }
+        if ({{ 'true' if edit_invoice.is_paid else 'false' }}) {
+            document.getElementById('isPaidToggle').checked = true;
+            document.getElementById('paymentMethod').value = '{{ edit_invoice.payment_method }}';
+        }
+
+        // 4. Inject existing invoice items into the cart UI
+        const tbody = document.getElementById('cartBody');
+        tbody.innerHTML = ''; // Ensure we start with a clean slate
+
+        {% for item in edit_invoice.items %}
+        (function () {
             addRow(); // Generate the HTML skeleton row
-            
+
             const newRow = tbody.lastElementChild;
             
+            // 🎯 Fixed: Added missing closing bracket
             newRow.querySelector('.product-search-input').value = {{ item.product.name | tojson }};
             newRow.querySelector('.product-search-input').style.borderBottom = "1px solid transparent";
-            
+
             newRow.querySelector('.product-id').value = {{ item.product_id }};
             newRow.querySelector('.hsn-input').value = '{{ item.product.hsn_code or "" }}';
             newRow.querySelector('.base-price-input').value = {{ item.base_price_at_purchase }};
@@ -537,25 +701,27 @@ document.addEventListener('DOMContentLoaded', function() {
             newRow.querySelector('.discount-value-input').value = {{ item.discount_value or 0 }};
             newRow.querySelector('.raw-gst').value = {{ item.gst_percentage_at_purchase }};
             newRow.querySelector('.qty-input').value = {{ item.quantity }};
-            
+
             // Re-render the GST layout (split vs normal)
             updateRowGstView(newRow);
-            
+
             // Safely inject specific tax splits if they existed
             {% if edit_invoice.split_gst %}
-                setTimeout(() => {
-                    const cgst = newRow.querySelector('.cgst-input');
-                    const sgst = newRow.querySelector('.sgst-input');
-                    if(cgst) cgst.value = {{ item.cgst_percentage or 0 }};
-                    if(sgst) sgst.value = {{ item.sgst_percentage or 0 }};
-                }, 50);
+            setTimeout(() => {
+                const cgst = newRow.querySelector('.cgst-input');
+                const sgst = newRow.querySelector('.sgst-input');
+                
+                // 🎯 Fixed: Added missing closing brackets
+                if (cgst) cgst.value = {{ item.cgst_percentage or 0 }};
+                if (sgst) sgst.value = {{ item.sgst_percentage or 0 }};
+            }, 50);
             {% endif %}
         })();
-    {% endfor %}
-    
-    // Ensure all totals recalculate correctly after inputs are populated
-    setTimeout(calculateGrandTotal, 100);
-});
+        {% endfor %}
+
+        // Ensure all totals recalculate correctly after inputs are populated
+        setTimeout(calculateGrandTotal, 100);
+    });
 </script>
 {% endif %}
 

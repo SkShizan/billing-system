@@ -105,3 +105,77 @@ def send_greenapi_whatsapp(phone_number, customer_name, company_name, invoice_no
     except Exception as e:
         print(f"Exception: {e}")
         return False, str(e)
+    
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# ... existing code (like send_greenapi_whatsapp and send_otp_email) ...
+
+def send_company_invoice_email(company, customer_email, customer_name, invoice_no, amount, invoice_link):
+    """Sends an invoice using the Seller's personal SMTP configuration."""
+    # Check if the seller has configured their SMTP
+    if not all([company.smtp_server, company.smtp_username, company.smtp_password]):
+        return False, "Seller SMTP not configured"
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = company.smtp_username
+        msg['To'] = customer_email
+        msg['Subject'] = f"Invoice {invoice_no} from {company.name}"
+        
+        # Beautiful HTML Email Body
+       # Beautiful HTML Email Body
+        body = f"""
+        <div style="background-color: #F5F3EF; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.05);">
+                
+                <div style="background-color: #66796B; padding: 35px 30px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600; letter-spacing: 1px;">Your Invoice is Ready</h1>
+                </div>
+                
+                <div style="padding: 40px 30px;">
+                    <h2 style="color: #2C2A28; margin-top: 0; font-size: 20px; font-weight: bold;">Hello {customer_name},</h2>
+                    <p style="color: #555555; font-size: 16px; line-height: 1.6;">
+                        Thank you for your business! Your invoice has been successfully generated. Here are the quick details of your recent transaction:
+                    </p>
+                    
+                    <div style="background-color: #FCFAF8; border: 1px solid #E2DBD3; border-radius: 8px; padding: 25px; margin: 30px 0; text-align: center;">
+                        <p style="margin: 0; color: #8C837A; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Total Amount</p>
+                        <h3 style="margin: 12px 0; color: #D7A184; font-size: 36px; font-weight: 800;">₹{amount}</h3>
+                        <p style="margin: 0; color: #555555; font-size: 15px;">Invoice Number: <strong style="color: #2C2A28;">{invoice_no}</strong></p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 40px 0;">
+                        <a href="{invoice_link}" style="background-color: #66796B; color: #ffffff; padding: 16px 36px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                            View & Download PDF
+                        </a>
+                    </div>
+                    
+                    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 0;">
+                        Best Regards,<br>
+                        <strong style="color: #2C2A28; font-size: 18px; display: inline-block; margin-top: 8px;">{company.name}</strong>
+                    </p>
+                </div>
+                
+                <div style="background-color: #FCFAF8; padding: 20px 30px; text-align: center; border-top: 1px solid #E2DBD3;">
+                    <p style="margin: 0; color: #8C837A; font-size: 12px; line-height: 1.5;">
+                        This is an automated message sent securely by <strong>{company.name}</strong>. <br>Please do not reply directly to this email.
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+        """
+        msg.attach(MIMEText(body, 'html'))
+        
+        # Connect and send
+        server = smtplib.SMTP(company.smtp_server, int(company.smtp_port))
+        server.starttls()
+        server.login(company.smtp_username, company.smtp_password)
+        server.send_message(msg)
+        server.quit()
+        return True, "Email sent successfully"
+    except Exception as e:
+        print(f"Invoice Email Error: {e}")
+        return False, str(e)

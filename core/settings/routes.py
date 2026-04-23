@@ -32,6 +32,21 @@ def index():
         if request.form.get('short_code'):
             company.short_code = request.form.get('short_code').strip().upper()
 
+        # 🎯 NEW: Save Custom SMTP Settings
+        if request.form.get('smtp_server') is not None:
+            company.smtp_server = request.form.get('smtp_server').strip()
+        
+        if request.form.get('smtp_port'):
+            company.smtp_port = int(request.form.get('smtp_port'))
+            
+        if request.form.get('smtp_username') is not None:
+            company.smtp_username = request.form.get('smtp_username').strip()
+            
+        # Only update password if they typed a new one, so they don't overwrite it with blank
+        new_smtp_pass = request.form.get('smtp_password')
+        if new_smtp_pass and new_smtp_pass.strip() != "":
+            company.smtp_password = new_smtp_pass.strip()
+
         # 2. Handle Logo Upload
         logo_file = request.files.get('logo')
         if logo_file and logo_file.filename != '':
@@ -62,7 +77,6 @@ def index():
         return redirect(url_for('settings.index'))
 
     return render_template('settings/index.html', company=company)
-
 # 🎯 NEW: AJAX Route to trigger the OTP from the Settings page
 @settings_bp.route('/request-otp', methods=['POST'])
 def request_otp():

@@ -46,111 +46,7 @@ def get_products():
     } for p in products]
     return jsonify(results)
 
-@billing_bp.route('/api/generate_bill', methods=['POST'])
-def generate_bill():
-    """API: Processes the cart and saves or UPDATES the invoice to the database."""
-    if not is_logged_in(): return jsonify({"success": False, "error": "Not logged in"})
-    
-    company_id = session['company_id']
-    data = request.json
-    
-    company = Company.query.get(company_id)
-    
-    # 1. Handle Customer
-    customer = Customer.query.filter_by(phone_number=data['customer_phone'], company_id=company_id).first()
-    if not customer:
-        customer = Customer(
-            company_id=company_id, 
-            name=data['customer_name'], 
-            phone_number=data['customer_phone']
-        )
-        db.session.add(customer)
-        db.session.flush() 
-    
-    # 2. 🎯 CHECK IF WE ARE EDITING AN EXISTING INVOICE
-    edit_invoice_id = data.get('edit_invoice_id')
-    
-    if edit_invoice_id:
-        # --- UPDATE EXISTING INVOICE ---
-        invoice = Invoice.query.filter_by(id=edit_invoice_id, company_id=company_id).first()
-        if not invoice:
-            return jsonify({"success": False, "error": "Invoice not found"})
-            
-        invoice.customer_id = customer.id
-        invoice.subtotal = data['subtotal']
-        invoice.discount_type = data['discount_type']
-        invoice.discount_value = data['discount_value']
-        invoice.total_tax = data['total_tax']
-        invoice.grand_total = data['grand_total']
-        invoice.is_paid = data.get('is_paid', invoice.is_paid)
-        invoice.payment_method = data.get('payment_method', invoice.payment_method)
-        invoice.split_gst = data.get('split_gst', invoice.split_gst)
-        
-        # Clear old items so we can insert the newly edited ones
-        InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
-        inv_num = invoice.invoice_number
-        
-    else:
-        # --- CREATE NEW INVOICE ---
-        company.invoice_seq += 1
-        st_code = (company.state_code or "ST").upper()
-        sh_code = (company.short_code or "CMP").upper()
-        inv_num = f"INV-{st_code}-{company.invoice_seq:04d}{sh_code}"
-        
-        invoice = Invoice(
-            company_id=company_id,
-            invoice_number=inv_num,
-            customer_id=customer.id,
-            subtotal=data['subtotal'],
-            discount_type=data['discount_type'],
-            discount_value=data['discount_value'],
-            total_tax=data['total_tax'],
-            grand_total=data['grand_total'],
-            is_paid=data.get('is_paid', False),
-            payment_method=data.get('payment_method', 'Cash'),
-            split_gst=data.get('split_gst', True)
-        )
-        db.session.add(invoice)
-        
-    db.session.flush()
 
-    # 4. Add Invoice Items
-    for item in data['items']:
-        product = Product.query.filter_by(id=item['product_id'], company_id=company_id).first()
-        if product:
-            inv_item = InvoiceItem(
-                invoice_id=invoice.id,
-                product_id=product.id,
-                quantity=item['quantity'],
-                price_at_purchase=item.get('final_price', product.current_price), 
-                base_price_at_purchase=item.get('base_price', product.current_price), 
-                discount_type=item.get('discount_type'),
-                discount_value=item.get('discount_value', 0.0),
-                gst_percentage_at_purchase=product.gst_percentage,
-                cgst_percentage=item.get('cgst', 0.0),
-                sgst_percentage=item.get('sgst', 0.0)
-            )
-            db.session.add(inv_item)
-    
-    db.session.commit()
-    
-    #whatsapp automation to remove it just remove below code From here
-    from core.utils import send_greenapi_whatsapp
-    
-    domain = request.host_url.rstrip('/')
-    public_link = f"{domain}/billing/public/invoice/{inv_num}"
-    
-    send_greenapi_whatsapp(
-        phone_number=customer.phone_number,
-        customer_name=customer.name,
-        company_name=company.name,
-        invoice_no=inv_num,
-        amount=invoice.grand_total,
-        invoice_link=public_link
-    )
-    #whatsapp automation to remove it just remove above code Till here
-    
-    return jsonify({"success": True, "invoice_id": invoice.id})
 
 # 🎯 NEW: Edit Invoice Route
 @billing_bp.route('/edit/<int:invoice_id>')
@@ -386,3 +282,140 @@ def customers_directory():
         pagination=pagination, 
         search_query=search_query
     )
+    
+    
+@billing_bp.route('/api/generate_bill', methods=['POST'])
+def generate_bill():
+    """API: Processes the cart and saves or UPDATES the invoice to the database."""
+    if not is_logged_in(): return jsonify({"success": False, "error": "Not logged in"})
+    
+    company_id = session['company_id']
+    data = request.json
+    company = Company.query.get(company_id)
+    
+    # 1. Handle Customer
+    customer = Customer.query.filter_by(phone_number=data['customer_phone'], company_id=company_id).first()
+    customer_email = data.get('customer_email')
+    
+    if not customer:
+        customer = Customer(
+            company_id=company_id, 
+            name=data['customer_name'], 
+            phone_number=data['customer_phone'],
+            email=customer_email
+        )
+        db.session.add(customer)
+        db.session.flush() 
+    else:
+        if customer_email:
+            customer.email = customer_email
+            db.session.flush()
+    
+    # 2. CHECK IF WE ARE EDITING AN EXISTING INVOICE
+    edit_invoice_id = data.get('edit_invoice_id')
+    
+    if edit_invoice_id:
+        # --- UPDATE EXISTING INVOICE ---
+        invoice = Invoice.query.filter_by(id=edit_invoice_id, company_id=company_id).first()
+        if not invoice: return jsonify({"success": False, "error": "Invoice not found"})
+            
+        invoice.customer_id = customer.id
+        invoice.subtotal = data['subtotal']
+        invoice.discount_type = data['discount_type']
+        invoice.discount_value = data['discount_value']
+        invoice.total_tax = data['total_tax']
+        invoice.grand_total = data['grand_total']
+        invoice.is_paid = data.get('is_paid', invoice.is_paid)
+        invoice.payment_method = data.get('payment_method', invoice.payment_method)
+        invoice.split_gst = data.get('split_gst', invoice.split_gst)
+        
+        InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
+        inv_num = invoice.invoice_number
+    else:
+        # --- CREATE NEW INVOICE ---
+        company.invoice_seq += 1
+        st_code = (company.state_code or "ST").upper()
+        sh_code = (company.short_code or "CMP").upper()
+        inv_num = f"INV-{st_code}-{company.invoice_seq:04d}{sh_code}"
+        
+        invoice = Invoice(
+            company_id=company_id, invoice_number=inv_num, customer_id=customer.id,
+            subtotal=data['subtotal'], discount_type=data['discount_type'], discount_value=data['discount_value'],
+            total_tax=data['total_tax'], grand_total=data['grand_total'],
+            is_paid=data.get('is_paid', False), payment_method=data.get('payment_method', 'Cash'),
+            split_gst=data.get('split_gst', True)
+        )
+        db.session.add(invoice)
+        
+    db.session.flush()
+
+    # 3. Add Invoice Items
+    # 4. Add Invoice Items
+    for item in data['items']:
+        product = Product.query.filter_by(id=item['product_id'], company_id=company_id).first()
+        if product:
+            inv_item = InvoiceItem(
+                invoice_id=invoice.id,
+                product_id=product.id,
+                quantity=item['quantity'],
+                price_at_purchase=item.get('final_price', product.current_price), 
+                base_price_at_purchase=item.get('base_price', product.current_price), 
+                discount_type=item.get('discount_type'),
+                discount_value=item.get('discount_value', 0.0),
+                
+                # 🎯 THIS IS THE CRUCIAL MISSING PART:
+                gst_percentage_at_purchase=item.get('gst', product.gst_percentage),
+                hsn_at_purchase=item.get('hsn', product.hsn_code),
+                
+                cgst_percentage=item.get('cgst', 0.0),
+                sgst_percentage=item.get('sgst', 0.0)
+            )
+            db.session.add(inv_item)
+            
+            # 🎯 Auto-fix messy inventory
+            if not product.hsn_code and item.get('hsn'):
+                product.hsn_code = item.get('hsn')
+
+    db.session.commit()
+    
+    # 4. AUTOMATIC EMAIL ONLY (WhatsApp Removed)
+        
+    return jsonify({"success": True, "invoice_id": invoice.id})
+
+@billing_bp.route('/api/send_invoice_email/<int:invoice_id>', methods=['POST'])
+def send_invoice_email(invoice_id):
+    """API: Sends the invoice via email when the button is clicked."""
+    if not is_logged_in(): return jsonify({"success": False, "error": "Not logged in"})
+    
+    company_id = session['company_id']
+    company = Company.query.get(company_id)
+    invoice = Invoice.query.filter_by(id=invoice_id, company_id=company_id).first()
+    
+    if not invoice:
+        return jsonify({"success": False, "error": "Invoice not found"})
+        
+    customer = invoice.customer
+    
+    # Check if we have what we need
+    if not customer.email:
+        return jsonify({"success": False, "error": "No email address saved for this customer."})
+    if not company.smtp_server or not company.smtp_username:
+        return jsonify({"success": False, "error": "Seller SMTP settings are not configured in Settings."})
+
+    domain = request.host_url.rstrip('/')
+    public_link = f"{domain}/billing/public/invoice/{invoice.invoice_number}"
+    
+    from core.utils import send_company_invoice_email
+    success, msg = send_company_invoice_email(
+        company=company, 
+        customer_email=customer.email, 
+        customer_name=customer.name,
+        invoice_no=invoice.invoice_number, 
+        amount=invoice.grand_total, 
+        invoice_link=public_link
+    )
+    
+    if success:
+        return jsonify({"success": True, "message": "Email sent successfully!"})
+    else:
+        return jsonify({"success": False, "error": msg})
