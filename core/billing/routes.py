@@ -29,6 +29,7 @@ def get_products():
     if query:
         products = Product.query.filter(
             Product.company_id == company_id,
+            Product.is_active == True,
             Product.name.ilike(f'%{query}%')
         ).limit(15).all()
     else:
@@ -286,55 +287,95 @@ def customers_directory():
     
 @billing_bp.route('/api/generate_bill', methods=['POST'])
 def generate_bill():
-    """API: Processes the cart and saves or UPDATES the invoice to the database."""
     if not is_logged_in(): return jsonify({"success": False, "error": "Not logged in"})
     
     company_id = session['company_id']
     data = request.json
-    company = Company.query.get(company_id)
     
-    # 1. Handle Customer
+    # 🎯 1. RACE CONDITION FIX: Lock the row so 2 cashiers can't get the same Invoice Number
+    company = Company.query.filter_by(id=company_id).with_for_update().first()
+    
+    # Handle Customer
     customer = Customer.query.filter_by(phone_number=data['customer_phone'], company_id=company_id).first()
-    customer_email = data.get('customer_email')
-    
     if not customer:
-        customer = Customer(
-            company_id=company_id, 
-            name=data['customer_name'], 
-            phone_number=data['customer_phone'],
-            email=customer_email
-        )
+        customer = Customer(company_id=company_id, name=data['customer_name'], phone_number=data['customer_phone'], email=data.get('customer_email'))
         db.session.add(customer)
-        db.session.flush() 
-    else:
-        if customer_email:
-            customer.email = customer_email
-            db.session.flush()
+        db.session.flush()
+    elif data.get('customer_email'):
+        customer.email = data.get('customer_email')
+        db.session.flush()
+
+    # 🎯 2. BACKEND MATH RECALCULATION: Never trust the frontend math
+    calc_subtotal = 0.0
+    calc_tax = 0.0
+    verified_items = []
+    is_split = data.get('split_gst', True)
     
-    # 2. CHECK IF WE ARE EDITING AN EXISTING INVOICE
+    for item in data['items']:
+        product = Product.query.filter_by(id=item['product_id'], company_id=company_id).first()
+        if not product: continue
+        
+        qty = int(item['quantity'])
+        base_price = float(item.get('base_price', product.current_price))
+        disc_type = item.get('discount_type', 'flat')
+        disc_val = float(item.get('discount_value', 0.0))
+        
+        # Calculate Secure Rate
+        rate = base_price
+        if disc_type == 'flat': rate -= disc_val
+        elif disc_type == 'percentage': rate -= (base_price * (disc_val / 100))
+        if rate < 0: rate = 0
+        
+        row_base_total = rate * qty
+        
+        # Calculate Secure Tax
+        gst_percent = float(item.get('gst', product.gst_percentage))
+        cgst = float(item.get('cgst', 0.0)) if is_split else 0.0
+        sgst = float(item.get('sgst', 0.0)) if is_split else 0.0
+        total_gst_percent = (cgst + sgst) if is_split else gst_percent
+        row_tax = row_base_total * (total_gst_percent / 100)
+        
+        calc_subtotal += row_base_total
+        calc_tax += row_tax
+        
+        verified_items.append({
+            'product_id': product.id, 'qty': qty, 'base_price': base_price,
+            'disc_type': disc_type, 'disc_val': disc_val, 'final_price': rate,
+            'gst': gst_percent, 'cgst': cgst, 'sgst': sgst, 
+            'hsn': item.get('hsn', product.hsn_code)
+        })
+        
+        if not product.hsn_code and item.get('hsn'):
+            product.hsn_code = item.get('hsn')
+
+    # Apply Global Discount Securely
+    global_disc_type = data.get('discount_type', 'flat')
+    global_disc_val = float(data.get('discount_value', 0.0))
+    global_disc_amt = global_disc_val if global_disc_type == 'flat' else calc_subtotal * (global_disc_val / 100)
+    
+    calc_grand_total = (calc_subtotal - global_disc_amt) + calc_tax
+    if calc_grand_total < 0: calc_grand_total = 0
+
     edit_invoice_id = data.get('edit_invoice_id')
     
     if edit_invoice_id:
-        if not invoice.access_token:
-            invoice.access_token = uuid.uuid4().hex
-        # --- UPDATE EXISTING INVOICE ---
+        # UPDATE EXISTING
         invoice = Invoice.query.filter_by(id=edit_invoice_id, company_id=company_id).first()
-        if not invoice: return jsonify({"success": False, "error": "Invoice not found"})
-            
         invoice.customer_id = customer.id
-        invoice.subtotal = data['subtotal']
-        invoice.discount_type = data['discount_type']
-        invoice.discount_value = data['discount_value']
-        invoice.total_tax = data['total_tax']
-        invoice.grand_total = data['grand_total']
+        invoice.subtotal = calc_subtotal
+        invoice.discount_type = global_disc_type
+        invoice.discount_value = global_disc_val
+        invoice.total_tax = calc_tax
+        invoice.grand_total = calc_grand_total
         invoice.is_paid = data.get('is_paid', invoice.is_paid)
         invoice.payment_method = data.get('payment_method', invoice.payment_method)
-        invoice.split_gst = data.get('split_gst', invoice.split_gst)
-        
+        invoice.split_gst = is_split
+        if not invoice.access_token: invoice.access_token = uuid.uuid4().hex
+            
         InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
         inv_num = invoice.invoice_number
     else:
-        # --- CREATE NEW INVOICE ---
+        # CREATE NEW
         company.invoice_seq += 1
         st_code = (company.state_code or "ST").upper()
         sh_code = (company.short_code or "CMP").upper()
@@ -342,46 +383,26 @@ def generate_bill():
         
         invoice = Invoice(
             company_id=company_id, invoice_number=inv_num, customer_id=customer.id,
-            subtotal=data['subtotal'], discount_type=data['discount_type'], discount_value=data['discount_value'],
-            total_tax=data['total_tax'], grand_total=data['grand_total'],
-            is_paid=data.get('is_paid', False), payment_method=data.get('payment_method', 'Cash'),
-            split_gst=data.get('split_gst', True), access_token=uuid.uuid4().hex
+            subtotal=calc_subtotal, discount_type=global_disc_type, discount_value=global_disc_val,
+            total_tax=calc_tax, grand_total=calc_grand_total, is_paid=data.get('is_paid', False), 
+            payment_method=data.get('payment_method', 'Cash'), split_gst=is_split, 
+            access_token=uuid.uuid4().hex
         )
         db.session.add(invoice)
         
     db.session.flush()
 
-    # 3. Add Invoice Items
-    # 4. Add Invoice Items
-    for item in data['items']:
-        product = Product.query.filter_by(id=item['product_id'], company_id=company_id).first()
-        if product:
-            inv_item = InvoiceItem(
-                invoice_id=invoice.id,
-                product_id=product.id,
-                quantity=item['quantity'],
-                price_at_purchase=item.get('final_price', product.current_price), 
-                base_price_at_purchase=item.get('base_price', product.current_price), 
-                discount_type=item.get('discount_type'),
-                discount_value=item.get('discount_value', 0.0),
-                
-                # 🎯 THIS IS THE CRUCIAL MISSING PART:
-                gst_percentage_at_purchase=item.get('gst', product.gst_percentage),
-                hsn_at_purchase=item.get('hsn', product.hsn_code),
-                
-                cgst_percentage=item.get('cgst', 0.0),
-                sgst_percentage=item.get('sgst', 0.0)
-            )
-            db.session.add(inv_item)
-            
-            # 🎯 Auto-fix messy inventory
-            if not product.hsn_code and item.get('hsn'):
-                product.hsn_code = item.get('hsn')
-
+    for vi in verified_items:
+        inv_item = InvoiceItem(
+            invoice_id=invoice.id, product_id=vi['product_id'], quantity=vi['qty'],
+            price_at_purchase=vi['final_price'], base_price_at_purchase=vi['base_price'], 
+            discount_type=vi['disc_type'], discount_value=vi['disc_val'],
+            gst_percentage_at_purchase=vi['gst'], hsn_at_purchase=vi['hsn'],
+            cgst_percentage=vi['cgst'], sgst_percentage=vi['sgst']
+        )
+        db.session.add(inv_item)
     db.session.commit()
     
-    # 4. AUTOMATIC EMAIL ONLY (WhatsApp Removed)
-        
     return jsonify({"success": True, "invoice_id": invoice.id})
 
 @billing_bp.route('/api/send_invoice_email/<int:invoice_id>', methods=['POST'])

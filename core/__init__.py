@@ -1,9 +1,17 @@
+import os
 from flask import Flask, redirect, url_for, session
 from .extensions import db
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///billing.db'
+    
+    # 🎯 PRODUCTION DATABASE SWITCH: 
+    # If a production DB URL exists, use it. Otherwise, safely fall back to local SQLite.
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///billing.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # REQUIRED FOR LOGIN SESSIONS

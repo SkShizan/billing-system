@@ -1,6 +1,7 @@
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, current_app, jsonify, flash, session
 from werkzeug.utils import secure_filename
+from sqlalchemy import func, case
 from core.models import Product, HSNDictionary
 from core.extensions import db
 
@@ -61,7 +62,8 @@ def add_product():
             discount_value=discount_val,
             hsn_code=hsn, 
             gst_percentage=float(gst),
-            image_path=image_path
+            image_path=image_path,
+            is_active=True # 🎯 Ensure new products are marked active
         )
         db.session.add(new_product)
         db.session.commit()
@@ -71,7 +73,8 @@ def add_product():
     page = request.args.get('page', 1, type=int)
     search_query = request.args.get('search', '').strip()
 
-    query = Product.query.filter_by(company_id=company_id)
+    # 🎯 SOFT DELETE FIX: Only fetch products that have not been deleted
+    query = Product.query.filter_by(company_id=company_id, is_active=True)
 
     if search_query:
         query = query.filter(
@@ -135,12 +138,13 @@ def delete_product(id):
     if not is_logged_in(): return redirect(url_for('auth.login'))
     
     product = Product.query.filter_by(id=id, company_id=session['company_id']).first_or_404()
-    db.session.delete(product)
+    
+    # 🎯 SOFT DELETE FIX: Hide the product instead of destroying it
+    product.is_active = False
+    
     db.session.commit()
     flash("Product deleted.", "info")
     return redirect(url_for('inventory.add_product'))
-
-from sqlalchemy import func, case
 
 @inventory_bp.route('/api/hsn-suggest')
 def hsn_suggest():

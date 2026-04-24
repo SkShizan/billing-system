@@ -1,6 +1,10 @@
 from .extensions import db
 from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 
+# Helper to always return current time in IST (UTC +5:30)
+def get_ist_time():
+    return datetime.utcnow() + timedelta(hours=5, minutes=30)
 # --- NEW: THE TENANT (COMPANY) MODEL ---
 class Company(db.Model):
     __tablename__ = 'companies'
@@ -37,7 +41,7 @@ class Customer(db.Model):
     name = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(15), nullable=False) # Removed unique=True so diff companies can have same customer
     email = db.Column(db.String(100), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_time)
     
     invoices = db.relationship('Invoice', backref='customer', lazy=True)
 
@@ -53,6 +57,7 @@ class Product(db.Model):
     hsn_code = db.Column(db.String(20), nullable=True)
     gst_percentage = db.Column(db.Float, default=0.0)
     image_path = db.Column(db.String(255), nullable=True) 
+    is_active = db.Column(db.Boolean, default=True)
 
 class Invoice(db.Model):
     __tablename__ = 'invoices'
@@ -72,7 +77,7 @@ class Invoice(db.Model):
     payment_method = db.Column(db.String(20), default='Cash')
     split_gst = db.Column(db.Boolean, default=True)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_time)
     items = db.relationship('InvoiceItem', backref='invoice', lazy=True)
 
 class InvoiceItem(db.Model):
