@@ -59,6 +59,7 @@ class Invoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # ISOLATION
     invoice_number = db.Column(db.String(50), unique=True, nullable=False)
+    access_token = db.Column(db.String(64), unique=True, nullable=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
     
     subtotal = db.Column(db.Float, nullable=False)

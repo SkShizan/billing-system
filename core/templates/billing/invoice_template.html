@@ -336,7 +336,7 @@
             const invNo = {{ invoice.invoice_number | tojson | safe }};
             const amount = '{{ "%.2f"|format(invoice.grand_total) }}';
             const companyName = {{ invoice.company.name | tojson | safe }};
-            const invoiceLink = `${window.location.origin}/billing/public/invoice/${invNo}`;
+            const invoiceLink = `${window.location.origin}/billing/public/invoice/{{ invoice.access_token }}`;
 
             const rawMessage = `Hello *${name}*,\n\nHere is your invoice *${invNo}* from *${companyName}* for *₹${amount}*.\n\n📄 *Download PDF here:*\n${invoiceLink}\n\nThank you for your business!`;
             

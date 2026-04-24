@@ -103,9 +103,9 @@ def view_invoice(invoice_id):
     invoice = Invoice.query.filter_by(id=invoice_id, company_id=session['company_id']).first_or_404()
     return render_template('billing/invoice_template.html', invoice=invoice, is_public=False)
 
-@billing_bp.route('/public/invoice/<invoice_number>')
-def public_view_invoice(invoice_number):
-    invoice = Invoice.query.filter_by(invoice_number=invoice_number).first_or_404()
+@billing_bp.route('/public/invoice/<access_token>')
+def public_view_invoice(access_token):
+    invoice = Invoice.query.filter_by(access_token=access_token).first_or_404()
     return render_template('billing/invoice_template.html', invoice=invoice, is_public=True)
 
 @billing_bp.route('/history')
@@ -315,6 +315,8 @@ def generate_bill():
     edit_invoice_id = data.get('edit_invoice_id')
     
     if edit_invoice_id:
+        if not invoice.access_token:
+            invoice.access_token = uuid.uuid4().hex
         # --- UPDATE EXISTING INVOICE ---
         invoice = Invoice.query.filter_by(id=edit_invoice_id, company_id=company_id).first()
         if not invoice: return jsonify({"success": False, "error": "Invoice not found"})
@@ -343,7 +345,7 @@ def generate_bill():
             subtotal=data['subtotal'], discount_type=data['discount_type'], discount_value=data['discount_value'],
             total_tax=data['total_tax'], grand_total=data['grand_total'],
             is_paid=data.get('is_paid', False), payment_method=data.get('payment_method', 'Cash'),
-            split_gst=data.get('split_gst', True)
+            split_gst=data.get('split_gst', True), access_token=uuid.uuid4().hex
         )
         db.session.add(invoice)
         
@@ -403,7 +405,8 @@ def send_invoice_email(invoice_id):
         return jsonify({"success": False, "error": "Seller SMTP settings are not configured in Settings."})
 
     domain = request.host_url.rstrip('/')
-    public_link = f"{domain}/billing/public/invoice/{invoice.invoice_number}"
+    # 🎯 Update this line inside send_invoice_email
+    public_link = f"{domain}/billing/public/invoice/{invoice.access_token}"
     
     from core.utils import send_company_invoice_email
     success, msg = send_company_invoice_email(
