@@ -463,25 +463,6 @@
         margin-bottom: 1.5rem;
     }
 
-    /* --- Responsive Adjustments --- */
-    @media (max-width: 768px) {
-        .kpi-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .hero-card {
-            grid-column: span 1;
-        }
-
-        .dashboard-title {
-            font-size: 2rem;
-        }
-
-        .kpi-value {
-            font-size: 2.25rem;
-        }
-    }
-
     /* --- Smooth Animations --- */
     @keyframes fadeInUp {
         from {
@@ -504,9 +485,114 @@
     .glass-card:nth-child(4) { animation-delay: 0.2s; }
     .glass-card:nth-child(5) { animation-delay: 0.25s; }
     .glass-card:nth-child(6) { animation-delay: 0.3s; }
+
+    /* --- Responsive Adjustments (Mobile, Tablet, Desktop) --- */
+    @media (max-width: 1200px) {
+        .kpi-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+    }
+
+    @media (max-width: 991.98px) {
+        .dashboard-header .d-flex {
+            align-items: flex-start !important;
+        }
+        .dashboard-header .d-flex.flex-wrap {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+        
+        .hero-card {
+            grid-column: span 1;
+        }
+
+        .dashboard-header {
+            padding: 1.5rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+        }
+
+        .kpi-value {
+            font-size: 2.25rem;
+        }
+
+        .chart-box {
+            padding: 1rem;
+            height: 300px;
+        }
+
+        .chart-header {
+            padding: 1.25rem 1.5rem;
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.75rem;
+        }
+
+        .table-container {
+            padding: 1.25rem;
+        }
+
+        .adv-table th, .adv-table td {
+            padding: 1rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .glass-card {
+            padding: 1.5rem;
+        }
+
+        .metric-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.75rem;
+        }
+
+        .date-filter-box {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch;
+            gap: 8px;
+        }
+
+        .date-filter-box input {
+            width: 100%;
+            text-align: center;
+        }
+
+        .date-filter-box span:not(.date-label) {
+            text-align: center;
+        }
+
+        .btn-gradient, .btn-apply {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .dashboard-header .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 1rem !important;
+        }
+    }
 </style>
 
-<!-- Dashboard Header -->
 <div class="dashboard-header">
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
         <div>
@@ -532,9 +618,7 @@
     </div>
 </div>
 
-<!-- KPI Grid -->
 <div class="kpi-grid">
-    <!-- Hero Card - Gross Sales -->
     <div class="glass-card hero-card">
         <div class="kpi-title">
             <span>💎</span>
@@ -547,7 +631,6 @@
         </div>
     </div>
 
-    <!-- Today's Revenue -->
     <div class="glass-card accent-card">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="metric-icon-wrapper" style="background: var(--gradient-sage); color: white;">⚡</div>
@@ -560,7 +643,6 @@
         </div>
     </div>
 
-    <!-- Total Revenue -->
     <div class="glass-card">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="metric-icon-wrapper">💰</div>
@@ -572,7 +654,6 @@
         </div>
     </div>
 
-    <!-- Average Order Value -->
     <div class="glass-card accent-card">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="metric-icon-wrapper" style="background: linear-gradient(135deg, #F5E6D3 0%, var(--beige-warm) 100%);">🛒</div>
@@ -584,7 +665,6 @@
         </div>
     </div>
 
-    <!-- Tax Liability -->
     <div class="glass-card">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="metric-icon-wrapper" style="background: var(--cream-soft); color: var(--sage-dark);">🏛️</div>
@@ -596,7 +676,6 @@
         </div>
     </div>
 
-    <!-- Inventory -->
     <div class="glass-card accent-card">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="metric-icon-wrapper" style="background: var(--gradient-warm);">📦</div>
@@ -609,9 +688,7 @@
     </div>
 </div>
 
-<!-- Charts Row -->
 <div class="row g-4 mb-4">
-    <!-- Revenue Chart -->
     <div class="col-12 col-xl-8">
         <div class="chart-card h-100">
             <div class="chart-header d-flex justify-content-between align-items-center">
@@ -624,7 +701,6 @@
         </div>
     </div>
 
-    <!-- Payment Breakdown -->
     <div class="col-12 col-xl-4">
         <div class="chart-card h-100">
             <div class="chart-header">
@@ -637,19 +713,18 @@
     </div>
 </div>
 
-<!-- Transactions Table -->
 <div class="row mb-5">
     <div class="col-12">
         <div class="table-container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
                 <h5 class="chart-title mb-0">Latest Transactions</h5>
-                <a href="/billing/history" class="btn-gradient" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                <a href="/billing/history" class="btn-gradient" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; align-self: flex-start;">
                     View All →
                 </a>
             </div>
             
             <div class="table-responsive">
-                <table class="adv-table">
+                <table class="adv-table" style="min-width: 800px;">
                     <thead>
                         <tr>
                             <th>Invoice ID</th>

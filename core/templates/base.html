@@ -42,6 +42,13 @@
             font-weight: 700;
             letter-spacing: -0.5px;
             color: #ffffff;
+            font-size: 1.1rem; /* Better scaling for mobile */
+        }
+
+        @media (min-width: 992px) {
+            .navbar-custom .navbar-brand {
+                font-size: 1.25rem;
+            }
         }
 
         .navbar-custom .nav-link {
@@ -120,31 +127,44 @@
         .text-taupe {
             color: var(--color-taupe) !important;
         }
+        
+        /* Mobile specific adjustments for buttons inside navbar */
+        @media (max-width: 991.98px) {
+            .navbar-nav .btn {
+                width: 100%;
+                text-align: center;
+                margin-top: 0.5rem;
+            }
+            .navbar-nav .nav-link {
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm">
         <div class="container">
 
             {% if session.get('company_name') %}
-            <a class="navbar-brand d-flex align-items-center" href="/billing/dashboard">
+            <a class="navbar-brand d-flex align-items-center text-truncate" href="/billing/dashboard" style="max-width: 75%;">
                 {% if session.get('company_logo') %}
                 <img src="{{ url_for('static', filename=session.get('company_logo')) }}" alt="Company Logo" height="40"
-                    style="object-fit: contain; max-width: 180px;">
+                    style="object-fit: contain; max-width: 100%; width: auto; max-width: 180px;">
                 {% else %}
-                <span style="color: var(--color-terracotta);" class="me-2">🏢</span> {{ session.get('company_name') }}
-                Workspace
+                <span style="color: var(--color-terracotta);" class="me-2">🏢</span> 
+                <span class="text-truncate">{{ session.get('company_name') }} Workspace</span>
                 {% endif %}
             </a>
 
             {% elif session.get('is_developer') %}
-            <a class="navbar-brand" href="/developer/dashboard">
+            <a class="navbar-brand text-truncate" href="/developer/dashboard" style="max-width: 75%;">
                 <span style="color: var(--color-sand);" class="me-2">⚙️</span> SuperAdmin Portal
             </a>
             {% else %}
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand text-truncate" href="/" style="max-width: 75%;">
                 <span style="color: var(--color-cream);" class="me-2">SaaS</span> Billing Platform
             </a>
             {% endif %}
@@ -154,7 +174,7 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav ms-auto align-items-lg-center mt-3 mt-lg-0">
 
                     {% if session.get('company_id') %}
                     <li class="nav-item">
@@ -172,7 +192,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/settings/">Settings</a>
                     </li>
-                    <li class="nav-item ms-3">
+                    <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
                         <a class="btn btn-outline-taupe btn-sm px-3 py-2" href="/auth/logout">Logout</a>
                     </li>
 
@@ -186,12 +206,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/developer/settings">System Config</a>
                     </li>
-                    <li class="nav-item ms-3">
+                    <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
                         <a class="btn btn-outline-taupe btn-sm px-3 py-2" href="/developer/logout">Logout</a>
                     </li>
 
                     {% else %}
-                    <li class="nav-item me-2">
+                    <li class="nav-item me-lg-2 mb-2 mb-lg-0">
                         <a class="btn btn-sage btn-sm px-4 py-2" href="/auth/login">Company Login</a>
                     </li>
                     <li class="nav-item">
@@ -206,7 +226,7 @@
         </div>
     </nav>
 
-    <div class="container pb-5 mt-5">
+    <div class="container pb-5 mt-4 mt-lg-5">
         {% block content %}
         {% endblock %}
     </div>

@@ -83,9 +83,9 @@
     }
 
     /* Input Groups */
-    .input-group-boutique { display: flex; }
-    .input-group-boutique .boutique-select { width: 75px; border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #F5F3EF; }
-    .input-group-boutique .boutique-input { flex: 1; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+    .input-group-boutique { display: flex; width: 100%; }
+    .input-group-boutique .boutique-select { width: 35%; max-width: 80px; border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #F5F3EF; }
+    .input-group-boutique .boutique-input { flex: 1; min-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
 
     /* Final Price Highlight */
     .price-highlight {
@@ -128,12 +128,13 @@
         border-radius: 50px;
         padding: 0.35rem 0.5rem 0.35rem 1rem;
         transition: all 0.2s;
+        width: 100%;
     }
     .search-pill:focus-within {
         border-color: var(--color-sage);
         box-shadow: 0 0 0 3px rgba(102, 121, 107, 0.15);
     }
-    .search-pill input { border: none; background: transparent; padding: 0.4rem; font-size: 0.9rem; width: 100%; outline: none; color: var(--color-text-dark); }
+    .search-pill input { border: none; background: transparent; padding: 0.4rem; font-size: 0.9rem; width: 100%; outline: none; color: var(--color-text-dark); min-width: 0; }
     .btn-search {
         background: var(--color-sage);
         color: white;
@@ -142,10 +143,22 @@
         padding: 0.4rem 1rem;
         font-weight: 600;
         font-size: 0.85rem;
+        white-space: nowrap;
     }
 
     /* --- Beautiful Table --- */
-    .table-boutique { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table-boutique { 
+        width: 100%; 
+        border-collapse: separate; 
+        border-spacing: 0; 
+        min-width: 700px; /* Forces scroll on small screens instead of crushing */
+    }
     .table-boutique th {
         background-color: var(--color-bg-app);
         color: var(--color-taupe);
@@ -156,6 +169,7 @@
         padding: 1rem 1.5rem;
         border-bottom: 2px solid var(--color-sand);
         border-top: 1px solid var(--color-sand);
+        white-space: nowrap;
     }
     .table-boutique td {
         padding: 1.25rem 1.5rem;
@@ -173,6 +187,7 @@
         object-fit: cover;
         border: 2px solid #FFF;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        flex-shrink: 0;
     }
     .avatar-placeholder {
         width: 48px; height: 48px;
@@ -181,12 +196,14 @@
         display: flex; align-items: center; justify-content: center;
         color: var(--color-taupe); font-size: 1.4rem;
         border: 1px solid var(--color-sand);
+        flex-shrink: 0;
     }
     .badge-warm {
         background: #F4ECE7; color: #9A5A38;
         padding: 0.35rem 0.75rem; border-radius: 8px;
         font-size: 0.8rem; font-weight: 800;
         border: 1px solid rgba(215, 161, 132, 0.3);
+        white-space: nowrap;
     }
 
     /* --- Action Icons (Soft & Floating) --- */
@@ -199,13 +216,14 @@
         border: 1px solid var(--color-sand);
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         transition: all 0.2s; cursor: pointer; text-decoration: none;
+        flex-shrink: 0;
     }
     .icon-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.06); }
     .icon-edit:hover { background: var(--color-sage-light); color: var(--color-sage); border-color: var(--color-sage); }
     .icon-del:hover { background: #FFF0F0; color: #D32F2F; border-color: #FFCDCD; }
 
     /* --- Autocomplete Dropdown --- */
-    .autocomplete-wrapper { position: relative; }
+    .autocomplete-wrapper { position: relative; width: 100%; }
     .autocomplete-menu {
         position: absolute; width: 100%; top: calc(100% + 8px); left: 0;
         background: #FFFFFF; border: 1px solid var(--color-sand);
@@ -221,12 +239,92 @@
     .modal-header { border-bottom: 1px solid var(--color-sand); padding: 1.75rem; }
     .modal-body { padding: 1.75rem; }
     .modal-footer { border-top: 1px solid var(--color-sand); padding: 1.5rem; background: #F5F3EF; border-bottom-left-radius: 1.5rem; border-bottom-right-radius: 1.5rem; }
+
+    /* ==========================================================================
+       RESPONSIVE MEDIA QUERIES
+       ========================================================================== */
+    
+    /* Large Tablets / Small Laptops */
+    @media (max-width: 991.98px) {
+        .col-lg-4 {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Tablets / Large Phones */
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 1.5rem;
+        }
+        
+        .card-header-boutique {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+            padding: 1.25rem;
+        }
+
+        .card-header-boutique form {
+            max-width: 100% !important;
+        }
+        
+        .boutique-card {
+            border-radius: 1rem;
+        }
+        
+        .card-body {
+            padding: 1.25rem !important;
+        }
+        
+        /* Modal spacing adjustments for mobile */
+        .modal-header, .modal-body, .modal-footer {
+            padding: 1.25rem;
+        }
+    }
+
+    /* Small Mobile Phones */
+    @media (max-width: 576px) {
+        .container-fluid {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+        }
+        
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
+        }
+
+        .boutique-input, .boutique-select {
+            padding: 0.6rem 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-boutique {
+            padding: 0.7rem 1.2rem;
+            font-size: 0.95rem;
+        }
+        
+        .pagination-container {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        /* Ensures row inputs stack nicely on tiny screens if needed */
+        .row.g-3 > .col-6 {
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="container-fluid py-4 px-lg-4">
     
-    <div class="d-flex align-items-center mb-5">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm me-3" style="width: 56px; height: 56px; border: 2px solid var(--color-sand);">
+    <div class="d-flex align-items-center mb-4 mb-md-5">
+        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm me-3 flex-shrink-0" style="width: 56px; height: 56px; border: 2px solid var(--color-sand);">
             <span class="fs-3">🛍️</span>
         </div>
         <div>
@@ -255,7 +353,7 @@
         <div class="col-lg-4">
             <div class="position-sticky" style="top: 24px;">
                 <div class="boutique-card">
-                    <div class="card-header-boutique">
+                    <div class="card-header-boutique flex-row">
                         <h6 class="section-title mb-0">Add New Item</h6>
                         <span style="color: var(--color-terracotta); font-size: 1.2rem;">✦</span>
                     </div>
@@ -269,11 +367,11 @@
                             </div>
                             
                             <div class="row g-3 mb-4">
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6 col-lg-6">
                                     <label class="boutique-label">HSN / SAC</label>
                                     <input type="text" name="hsn_code" id="hsnCode" class="boutique-input" required readonly placeholder="Auto-fills">
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6 col-lg-6">
                                     <label class="boutique-label">Tax (GST)</label>
                                     <div class="position-relative">
                                         <input type="number" step="0.01" name="gst_percentage" id="gstPercentage" class="boutique-input" placeholder="0" required>
@@ -291,7 +389,7 @@
                             </div>
 
                             <div class="row g-3 mb-4 pb-4 border-bottom" style="border-color: var(--color-sand) !important;">
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6 col-lg-6">
                                     <label class="boutique-label">Discount</label>
                                     <div class="input-group-boutique">
                                         <select name="discount_type" id="discountType" class="boutique-select" onchange="calcMainFinalPrice()">
@@ -301,7 +399,7 @@
                                         <input type="number" name="discount_value" id="discountValue" class="boutique-input" placeholder="0" step="0.01" value="0" onkeyup="calcMainFinalPrice()">
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6 col-lg-6">
                                     <label class="boutique-label" style="color: var(--color-terracotta);">Final Rate</label>
                                     <input type="number" name="price" id="finalPrice" class="boutique-input price-highlight" required readonly value="0.00">
                                 </div>
@@ -309,7 +407,7 @@
 
                             <div class="mb-4">
                                 <label class="boutique-label">Product Image (Optional)</label>
-                                <input type="file" name="image" class="boutique-input" style="padding: 0.5rem; background: #FFFFFF;" accept="image/*">
+                                <input type="file" name="image" class="boutique-input" style="padding: 0.4rem; background: #FFFFFF;" accept="image/*">
                             </div>
                             
                             <button type="submit" class="btn-boutique">
@@ -324,10 +422,10 @@
         <div class="col-lg-8">
             <div class="boutique-card h-100">
                 
-                <div class="card-header-boutique d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div class="card-header-boutique">
                     <h6 class="section-title mb-0">Current Catalog</h6>
                     
-                    <form method="GET" action="/inventory/add-product" class="w-100" style="max-width: 320px;">
+                    <form method="GET" action="/inventory/add-product" class="w-100 mt-3 mt-md-0" style="max-width: 320px;">
                         <div class="search-pill">
                             <input type="text" name="search" placeholder="Search catalog..." value="{{ search_query or '' }}">
                             {% if search_query %}
@@ -338,7 +436,7 @@
                     </form>
                 </div>
                 
-                <div class="table-responsive" style="min-height: 400px;">
+                <div class="table-container" style="min-height: 400px;">
                     <table class="table-boutique">
                         <thead>
                             <tr>
@@ -411,11 +509,11 @@
                                                 </div>
                                                 
                                                 <div class="row g-3 mb-4">
-                                                    <div class="col-6">
+                                                    <div class="col-12 col-sm-6">
                                                         <label class="boutique-label">HSN Code</label>
                                                         <input type="text" name="hsn_code" class="boutique-input" value="{{ p.hsn_code }}" required>
                                                     </div>
-                                                    <div class="col-6">
+                                                    <div class="col-12 col-sm-6">
                                                         <label class="boutique-label">GST Rate (%)</label>
                                                         <input type="number" step="0.01" name="gst_percentage" class="boutique-input" value="{{ p.gst_percentage }}" required>
                                                     </div>
@@ -430,7 +528,7 @@
                                                 </div>
 
                                                 <div class="row g-3 mb-4 pb-4 border-bottom" style="border-color: var(--color-sand) !important;">
-                                                    <div class="col-6">
+                                                    <div class="col-12 col-sm-6">
                                                         <label class="boutique-label">Discount</label>
                                                         <div class="input-group-boutique">
                                                             <select name="discount_type" class="boutique-select edit-calc edit-type">
@@ -440,7 +538,7 @@
                                                             <input type="number" name="discount_value" class="boutique-input edit-calc edit-val" step="0.01" value="{{ p.discount_value or 0 }}">
                                                         </div>
                                                     </div>
-                                                    <div class="col-6">
+                                                    <div class="col-12 col-sm-6">
                                                         <label class="boutique-label" style="color: var(--color-terracotta);">Final Rate</label>
                                                         <input type="number" name="price" class="boutique-input price-highlight edit-final" value="{{ p.current_price }}" required readonly>
                                                     </div>
@@ -448,7 +546,7 @@
 
                                                 <div class="mb-2">
                                                     <label class="boutique-label">Replace Image (Optional)</label>
-                                                    <input type="file" name="image" class="boutique-input" style="padding: 0.5rem; background: #FFFFFF;" accept="image/*">
+                                                    <input type="file" name="image" class="boutique-input" style="padding: 0.4rem; background: #FFFFFF;" accept="image/*">
                                                 </div>
                                             </div>
                                             
@@ -480,7 +578,7 @@
                 </div>
                 
                 {% if pagination.pages > 1 %}
-                <div class="p-3 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3" style="background: var(--color-bg-app); border-top: 1px solid var(--color-sand); border-bottom-left-radius: var(--radius-card); border-bottom-right-radius: var(--radius-card);">
+                <div class="p-3 d-flex pagination-container justify-content-between align-items-center" style="background: var(--color-bg-app); border-top: 1px solid var(--color-sand); border-bottom-left-radius: var(--radius-card); border-bottom-right-radius: var(--radius-card);">
                     <span style="color: var(--color-taupe); font-size: 0.9rem; font-weight: 600;">Page <b style="color: var(--color-text-dark);">{{ pagination.page }}</b> of <b>{{ pagination.pages }}</b></span>
                     <div class="btn-group shadow-sm" style="border-radius: 10px; overflow: hidden; border: 1px solid var(--color-sand);">
                         {% if pagination.has_prev %}

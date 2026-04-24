@@ -6,17 +6,34 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 2rem 1rem;
     }
+    
+    /* Custom container to prevent 'squished' look on PC */
+    .admin-auth-container {
+        width: 100%;
+        max-width: 450px; /* Perfect proportional width for a login card on PC */
+    }
+
     .admin-card {
         border-radius: 24px;
         border: none;
         background: var(--text-dark); /* Very dark background from base palette */
         box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        padding: 3rem 2.5rem;
+        padding: 2.5rem 1.5rem; /* Slightly smaller padding for mobile */
         color: #ffffff;
         position: relative;
         overflow: hidden;
+        width: 100%;
     }
+
+    /* Larger padding for tablets and PC */
+    @media (min-width: 576px) {
+        .admin-card {
+            padding: 3rem 2.5rem; 
+        }
+    }
+
     /* Elegant gradient bar at the top of the card */
     .admin-card::before {
         content: '';
@@ -24,6 +41,7 @@
         top: 0; left: 0; right: 0; height: 6px;
         background: linear-gradient(90deg, var(--color-taupe), var(--color-terracotta));
     }
+    
     .admin-icon {
         width: 64px;
         height: 64px;
@@ -37,6 +55,7 @@
         margin: 0 auto 1.5rem auto;
         border: 1px solid rgba(255,255,255,0.1);
     }
+    
     .admin-input {
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.1);
@@ -46,6 +65,7 @@
         transition: all 0.3s ease;
         font-weight: 500;
     }
+    
     .admin-input:focus {
         background: rgba(255,255,255,0.08);
         border-color: var(--color-taupe);
@@ -53,13 +73,28 @@
         box-shadow: 0 0 0 4px rgba(186, 142, 122, 0.2);
         outline: none;
     }
+    
     .admin-input::placeholder {
         color: rgba(255,255,255,0.3);
+    }
+    
+    .btn-auth {
+        background-color: var(--color-terracotta);
+        color: white;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-auth:hover {
+        background-color: #c48f72;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(215, 161, 132, 0.3);
+        color: white;
     }
 </style>
 
 <div class="admin-login-wrapper">
-    <div class="col-md-6 col-lg-4">
+    <div class="admin-auth-container">
         <div class="admin-card text-center">
             
             <div class="admin-icon">⚙️</div>
@@ -69,7 +104,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
-                  <div class="alert rounded-3 border-0 small text-start shadow-sm" style="background-color: rgba(255,255,255,0.1); color: var(--color-sand); border: 1px solid rgba(212, 194, 173, 0.2);">
+                  <div class="alert rounded-3 border-0 small text-start shadow-sm mb-4" style="background-color: rgba(255,255,255,0.1); color: var(--color-sand); border: 1px solid rgba(212, 194, 173, 0.2);">
                       {{ message }}
                   </div>
                 {% endfor %}
@@ -85,8 +120,14 @@
                     <label class="form-label text-white-50 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Secure Password</label>
                     <input type="password" name="password" class="form-control admin-input" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn btn-terracotta w-100 btn-lg rounded-3 fw-bold py-3 mt-2">Authenticate Session</button>
+                <button type="submit" class="btn btn-auth w-100 btn-lg rounded-3 fw-bold py-3 mt-2" style="font-size: 1.05rem;">Authenticate Session</button>
             </form>
+            
+            <div class="text-center mt-4 pt-3 border-top" style="border-color: rgba(255, 255, 255, 0.1) !important;">
+                <a href="/" class="text-decoration-none small fw-bold d-inline-flex align-items-center" style="color: rgba(255,255,255,0.5); transition: all 0.2s ease;" onmouseover="this.style.color='var(--color-sand)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">
+                    <span class="me-1">←</span> Return to Public Site
+                </a>
+            </div>
             
         </div>
     </div>

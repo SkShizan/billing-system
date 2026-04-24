@@ -6,46 +6,87 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 2rem 1rem;
     }
+    
+    /* Replaces the restrictive bootstrap columns for a better PC experience */
+    .auth-container {
+        width: 100%;
+        max-width: 480px; /* Gives it the perfect breathing room on PC */
+    }
+
     .auth-card {
         border-radius: 20px;
         box-shadow: var(--shadow-hover);
         background: #ffffff;
         border: 1px solid rgba(212, 194, 173, 0.4);
+        transition: box-shadow 0.3s ease;
     }
+
     .auth-title {
         color: var(--color-sage);
-        font-weight: 700;
+        font-weight: 800;
         letter-spacing: -0.5px;
+        font-size: 1.75rem;
     }
+
     .form-control-custom {
-        border: 1px solid var(--color-sand);
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        transition: all 0.2s ease;
+        border: 1.5px solid var(--color-sand);
+        border-radius: 12px;
+        padding: 0.8rem 1.2rem;
+        background-color: #FCFAF8;
+        font-weight: 500;
+        color: var(--text-dark);
+        transition: all 0.25s ease;
     }
+
     .form-control-custom:focus {
+        background-color: #ffffff;
         border-color: var(--color-terracotta);
         box-shadow: 0 0 0 4px rgba(215, 161, 132, 0.15);
         outline: none;
     }
+    
+    .form-control-custom::placeholder {
+        color: #BDB5AC;
+        font-weight: 400;
+    }
+
+    .login-btn {
+        background-color: var(--color-terracotta);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.85rem;
+        font-weight: 700;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(215, 161, 132, 0.25);
+    }
+
+    .login-btn:hover {
+        background-color: #c48f72;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(215, 161, 132, 0.35);
+        color: white;
+    }
 </style>
 
 <div class="login-wrapper">
-    <div class="col-12 col-md-6 col-lg-4">
-        <div class="card auth-card border-0 p-5">
-            <div class="text-center mb-4">
+    <div class="auth-container">
+        <div class="card auth-card border-0 p-4 p-sm-5">
+            <div class="text-center mb-4 pb-2">
                 <div class="mb-3">
-                    <span style="font-size: 2.5rem; color: var(--color-terracotta);">🏢</span>
+                    <span style="font-size: 3rem; color: var(--color-terracotta); line-height: 1;">🏢</span>
                 </div>
-                <h3 class="auth-title mb-1">Welcome Back</h3>
-                <p class="text-muted small fw-medium">Sign in to your workspace</p>
+                <h3 class="auth-title mb-2">Welcome Back</h3>
+                <p class="text-muted small fw-medium mb-0" style="font-size: 0.95rem;">Sign in to your workspace</p>
             </div>
             
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
-                  <div class="alert alert-{{ category }} rounded-3 small fw-medium border-0" style="background-color: var(--color-cream); color: var(--color-taupe);">
+                  <div class="alert alert-{{ category }} rounded-3 small fw-bold border-0 text-center mb-4" style="background-color: var(--color-cream); color: var(--color-taupe);">
                       {{ message }}
                   </div>
                 {% endfor %}
@@ -53,24 +94,26 @@
             {% endwith %}
 
             <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label text-muted fw-semibold small mb-1">Company Login ID</label>
+                <div class="mb-4">
+                    <label class="form-label text-muted fw-bold small mb-2 text-uppercase" style="letter-spacing: 0.5px;">Company Login ID</label>
                     <input type="text" name="login_id" class="form-control form-control-custom" placeholder="Enter your ID" required>
                 </div>
                 
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="form-label text-muted fw-semibold small mb-0">Password</label>
+                <div class="mb-4 pb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label text-muted fw-bold small mb-0 text-uppercase" style="letter-spacing: 0.5px;">Password</label>
                         <a href="/auth/forgot-password" class="text-decoration-none small fw-bold" style="color: var(--color-terracotta); transition: color 0.2s ease;" onmouseover="this.style.color='var(--color-taupe)'" onmouseout="this.style.color='var(--color-terracotta)'">Forgot Password?</a>
                     </div>
                     <input type="password" name="password" class="form-control form-control-custom" placeholder="••••••••" required>
                 </div>
 
-                <button type="submit" class="btn btn-terracotta w-100 py-2 fs-6 mb-3 fw-bold shadow-sm">Login to Workspace</button>
+                <button type="submit" class="btn login-btn w-100 mb-3">Login to Workspace</button>
             </form>
             
-            <div class="text-center mt-3">
-                <a href="/" class="text-decoration-none small fw-bold" style="color: var(--color-taupe);">← Back to Home</a>
+            <div class="text-center mt-3 pt-2 border-top" style="border-color: rgba(212, 194, 173, 0.3) !important;">
+                <a href="/" class="text-decoration-none small fw-bold d-inline-flex align-items-center mt-3" style="color: var(--color-taupe); transition: all 0.2s ease;" onmouseover="this.style.color='var(--color-sage)'" onmouseout="this.style.color='var(--color-taupe)'">
+                    <span class="me-1">←</span> Back to Home
+                </a>
             </div>
         </div>
     </div>

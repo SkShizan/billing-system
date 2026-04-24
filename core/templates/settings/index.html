@@ -56,9 +56,68 @@
     .logo-preview-box img { width: 100%; height: 100%; object-fit: contain; }
     
     .divider { height: 1px; background: rgba(212, 194, 173, 0.3); margin: 2rem 0; }
+
+    /* ==========================================================================
+       RESPONSIVE MEDIA QUERIES
+       ========================================================================== */
+    
+    /* Responsive Save Button */
+    .btn-save-settings {
+        background-color: var(--color-sage); 
+        color: white; 
+        border-radius: 8px;
+        width: auto;
+    }
+
+    /* Tablets and Large Phones */
+    @media (max-width: 768px) {
+        .panel-header {
+            padding: 1.25rem;
+        }
+        
+        .card-body {
+            padding: 1.25rem !important;
+        }
+
+        .settings-header {
+            font-size: 1.75rem;
+        }
+
+        .card-footer {
+            padding: 1.25rem !important;
+        }
+
+        .divider {
+            margin: 1.5rem 0;
+        }
+    }
+
+    /* Small Mobile Phones */
+    @media (max-width: 576px) {
+        .settings-header {
+            font-size: 1.5rem;
+        }
+
+        .form-control-premium {
+            padding: 0.6rem 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-save-settings {
+            width: 100%; /* Stretch button on mobile */
+        }
+
+        .card-footer {
+            text-align: center !important;
+        }
+
+        .modal-body {
+            padding: 1.25rem !important;
+        }
+    }
 </style>
 
-<div class="row mt-4 mb-4">
+<div class="row mt-3 mt-md-4 mb-3 mb-md-4">
     <div class="col-12 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <span class="fs-3 me-2 text-taupe">⚙️</span>
@@ -72,9 +131,9 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ category }} rounded-3 shadow-sm border-0 fw-bold" style="background-color: var(--color-cream); color: var(--color-sage);">
-                  ✓ {{ message }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              <div class="alert alert-{{ category }} rounded-3 shadow-sm border-0 fw-bold d-flex justify-content-between align-items-center" style="background-color: var(--color-cream); color: var(--color-sage);">
+                  <div>✓ {{ message }}</div>
+                  <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"></button>
               </div>
             {% endfor %}
           {% endif %}
@@ -83,10 +142,10 @@
 </div>
 
 <form method="POST" action="/settings/" enctype="multipart/form-data">
-    <div class="row g-4">
+    <div class="row g-3 g-md-4">
         
         <div class="col-lg-4">
-            <div class="panel-card h-100">
+            <div class="panel-card h-100 mb-0">
                 <div class="panel-header">
                     <h5 class="mb-0 fw-bold text-dark">Brand Identity</h5>
                     <p class="text-muted small mb-0 mt-1">This logo appears on your printed invoices.</p>
@@ -112,7 +171,7 @@
         </div>
 
         <div class="col-lg-8">
-            <div class="panel-card">
+            <div class="panel-card mb-0">
                 <div class="panel-header">
                     <h5 class="mb-0 fw-bold text-dark">Business Profile</h5>
                     <p class="text-muted small mb-0 mt-1">Update your legal business information.</p>
@@ -120,11 +179,11 @@
                 <div class="card-body p-4">
                     
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label-premium">Business Name</label>
                             <input type="text" name="name" class="form-control form-control-premium" value="{{ company.name }}" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label-premium">Email Address</label>
                             <input type="email" name="email" class="form-control form-control-premium" value="{{ company.email }}" required>
                         </div>
@@ -132,15 +191,15 @@
                             <label class="form-label-premium">Complete Address</label>
                             <textarea name="address" class="form-control form-control-premium" rows="2" required>{{ company.address }}</textarea>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label-premium">GSTIN</label>
                             <input type="text" name="gstin" class="form-control form-control-premium" value="{{ company.gstin }}" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6 col-md-6">
                             <label class="form-label-premium">State Code (For Invoice)</label>
                             <input type="text" name="state_code" class="form-control form-control-premium" value="{{ company.state_code }}" placeholder="e.g. WB" maxlength="5">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6 col-md-6">
                             <label class="form-label-premium">Short Code (For Invoice)</label>
                             <input type="text" name="short_code" class="form-control form-control-premium" value="{{ company.short_code }}" placeholder="e.g. SBD" maxlength="10">
                         </div>
@@ -150,12 +209,12 @@
 
                     <h5 class="fw-bold text-dark mb-3">Security</h5>
                     <div class="row g-3 align-items-center">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label-premium">Login ID</label>
                             <input type="text" class="form-control form-control-premium text-muted" value="{{ company.login_id }}" readonly disabled style="background-color: #eee;">
                             <small class="text-muted mt-1 d-block">Login ID cannot be changed.</small>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6 mt-3 mt-md-0">
                             <label class="form-label-premium d-block">Account Password</label>
                             <button type="button" class="btn btn-outline-taupe w-100 py-2 fw-bold d-flex justify-content-between align-items-center" onclick="requestOTP()" id="reqOtpBtn">
                                 <span>Change Password</span>
@@ -167,26 +226,26 @@
                 </div>
             </div>
 
-            <div class="panel-card mt-4">
+            <div class="panel-card mt-3 mt-md-4">
                 <div class="panel-header bg-light">
                     <h5 class="mb-0 fw-bold text-dark">Invoice Email Automation (SMTP)</h5>
                     <p class="text-muted small mb-0 mt-1">Configure your email provider to automatically email invoices to customers.</p>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-3">
-                        <div class="col-md-8">
+                        <div class="col-12 col-md-8">
                             <label class="form-label-premium">SMTP Server</label>
                             <input type="text" name="smtp_server" class="form-control form-control-premium" value="{{ company.smtp_server or '' }}" placeholder="e.g. smtp.gmail.com">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label class="form-label-premium">Port</label>
                             <input type="number" name="smtp_port" class="form-control form-control-premium" value="{{ company.smtp_port or 587 }}" placeholder="587">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label-premium">Email Address (Username)</label>
                             <input type="email" name="smtp_username" class="form-control form-control-premium" value="{{ company.smtp_username or '' }}" placeholder="billing@yourcompany.com">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label-premium">App Password</label>
                             <input type="password" name="smtp_password" class="form-control form-control-premium" placeholder="••••••••">
                             <small class="text-muted mt-1 d-block">Leave blank to keep existing password.</small>
@@ -194,7 +253,7 @@
                     </div>
                 </div>
                 <div class="card-footer border-top-0 p-4 text-end" style="background-color: #fcfbf9 !important;">
-                    <button type="submit" class="btn fw-bold px-5 py-2 shadow-sm" style="background-color: var(--color-sage); color: white; border-radius: 8px;">Save Settings & Profile</button>
+                    <button type="submit" class="btn fw-bold px-5 py-2 shadow-sm btn-save-settings">Save Settings & Profile</button>
                 </div>
             </div>
 
@@ -204,15 +263,15 @@
 </form>
 
 <div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered mx-3 mx-sm-auto">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
       <div class="modal-header border-0 pb-0 pt-4 px-4">
         <h5 class="modal-title fw-bold text-sage">Secure Password Change</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body px-4 pt-3">
+      <div class="modal-body px-4 pt-3 pb-4">
         <div class="alert alert-info rounded-3 small fw-medium mb-4" style="background-color: #F8F5F1; border: 1px solid var(--color-sand); color: var(--color-taupe);">
-            We just sent a 6-digit verification code to <strong>{{ company.email }}</strong>.
+            We just sent a 6-digit verification code to <strong class="text-break">{{ company.email }}</strong>.
         </div>
         
         <form method="POST" action="/settings/">
